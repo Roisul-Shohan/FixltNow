@@ -130,8 +130,24 @@ const loginUser = async(payload : TLoginUser) => {
 
 }
 
+const getMyProfile = async (id : string) =>{
+
+    const user = await prisma.user.findUnique({
+        where :{id},
+        include :{
+            technicianProfile : true,
+        },
+        omit :{
+            password : true,
+        }
+    });
+
+    return user;
+}
+
 
 export const AuthService = {
   registerUser,
-  loginUser
+  loginUser,
+  getMyProfile,
 };

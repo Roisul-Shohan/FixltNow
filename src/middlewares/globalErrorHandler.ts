@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { Prisma } from "../../prisma/generated/prisma/client";
 import httpStatus from "http-status";
+import { ZodError } from "zod";
 
 
 const globalErrorHandler = (
@@ -47,6 +48,18 @@ if(err instanceof Prisma.PrismaClientValidationError){
             statusCode = httpStatus.INTERNAL_SERVER_ERROR;
            message = "Error occurred during query execution"
     }
+
+  if (err instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: "Validation failed",
+        errors: err.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+  }
 
 
 
