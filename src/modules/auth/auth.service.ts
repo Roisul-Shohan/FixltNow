@@ -76,6 +76,10 @@ const loginUser = async(payload : TLoginUser) => {
         throw new AppError(httpStatus.NOT_FOUND,"User not found")
     }
 
+    if(user.status === "BLOCKED"){
+        throw new AppError(httpStatus.FORBIDDEN,"Your account has been blocked. Please contact support.");
+    }
+
     let isPasswordValid = false;
 
     if(user.role === "ADMIN"){
@@ -91,6 +95,7 @@ const loginUser = async(payload : TLoginUser) => {
     if(!isPasswordValid) {
         throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials")
     }
+
 
     const jwtPayload: JwtPayload = {
         id: user.id,
