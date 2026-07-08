@@ -10,6 +10,17 @@ const updateUserStatusSchema = z.object({
   }),
 });
 
+const createCategorySchema = z.object({
+  body: z.object({
+    name: z.string({
+      error: "Category name is required",
+    }).min(1),
+
+    description: z.string().optional(),
+  }),
+});
+
 export const AdminValidation = {
   updateUserStatusSchema,
+  createCategorySchema,
 };

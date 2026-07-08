@@ -23,4 +23,18 @@ router.patch(
   AdminController.updateUserStatus
 );
 
+router.post(
+  "/categories",
+  auth(UserRole.ADMIN),
+  validateRequest(AdminValidation.createCategorySchema),
+  AdminController.createCategory
+);
+
+router.get(
+  "/categories",
+  auth(UserRole.ADMIN),
+  AdminController.getAllCategories
+);
+
+
 export const AdminRoutes = router;

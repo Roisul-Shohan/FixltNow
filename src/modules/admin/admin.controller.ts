@@ -30,11 +30,38 @@ const updateUserStatus = catchAsync (async (req, res )=>{
         message: "User status updated successfully",
         data: updateUser,
     });
-})
+});
+
+const createCategory = catchAsync (async (req , res )=>{
+
+    const result = await AdminService.createCategory(req.body);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "Category created successfully",
+        data: result,
+    });
+
+});
+
+const getAllCategories = catchAsync(async (req, res) => {
+  const result = await AdminService.getAllCategories(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Categories retrieved successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
 
 
 
 export const AdminController = {
   getAllUsers,
-  updateUserStatus
+  updateUserStatus,
+  createCategory,
+  getAllCategories,
 };

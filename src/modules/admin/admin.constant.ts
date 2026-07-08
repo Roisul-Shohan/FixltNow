@@ -1,10 +1,18 @@
-export const adminSearchableFields = [
+export const userSearchableFields = [
   "name",
   "technicianProfile.bio",
 ];
 
-export const adminFilterableFields = [
+export const userFilterableFields = [
   "role",
   "status",
   "technicianProfile.yearsOfExperience",
+];
+
+export const categorySearchableFields = [
+  "description",
+];
+
+export const categoryFilterableFields = [
+  "name",
 ];

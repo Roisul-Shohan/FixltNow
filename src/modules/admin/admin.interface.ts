@@ -1,4 +1,4 @@
-import { UserWhereInput } from "../../../prisma/generated/prisma/models";
+import { CategoryWhereInput, UserWhereInput } from "../../../prisma/generated/prisma/models";
 
 export interface Igetuser extends UserWhereInput{
     searchTerm?: string
@@ -7,4 +7,18 @@ export interface Igetuser extends UserWhereInput{
     sortOrder?: "asc"|"desc"
     sortBy?: string
 
+}
+
+export interface IgetCategory extends CategoryWhereInput{
+    searchTerm?: string
+    page?: string
+    limit?: string
+    sortOrder?: "asc"|"desc"
+    sortBy?: string  
+}
+
+
+export interface ICategory{
+    name : string
+    description ? : string
 }
