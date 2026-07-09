@@ -1,10 +1,11 @@
+import AppError from "../../errors/AppErrors";
 import { prisma } from "../../lib/prisma";
 import { buildFilterCondition } from "../../utils/filter";
 import { calculatePagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { technicianSearchableFields } from "./technician.constant";
 import { IGetTechnician } from "./technician.interface";
-
+import httpStatus from 'http-status'
 const getAllTechnicians = async (query: IGetTechnician) => {
   const { searchTerm, rating, yearsOfExperience, ...filters } = query;
 
@@ -94,8 +95,61 @@ return {
   };
 };
 
+const getTechnicianById = async (id: string) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: {
+      id,
+    },
+
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          profileImage: true,
+        },
+      },
+
+      service: {
+        where: {
+          isActive: true,
+        },
+
+        include: {
+          category: true,
+        },
+      },
+
+      review: {
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        include: {
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!technician) {
+    throw new AppError(httpStatus.NOT_FOUND, "Technician not found");
+  }
+
+  return technician;
+};
+
 
 
 export const TechnicianService = {
   getAllTechnicians,
+  getTechnicianById
 };
