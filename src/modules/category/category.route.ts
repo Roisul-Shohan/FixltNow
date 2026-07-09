@@ -8,4 +8,9 @@ router.get(
   CategoryController.getAllCategories
 );
 
+router.get(
+  "/:id",
+  CategoryController.getCategoryById
+);
+
 export const CategoryRouter = router;

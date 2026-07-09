@@ -1,8 +1,11 @@
+import AppError from "../../errors/AppErrors";
 import { prisma } from "../../lib/prisma";
 import { calculatePagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { categorySearchableFields } from "./category.constant";
 import { IGetCategory } from "./category.interface";
+import httpStatus from "http-status";
+
 
 const getAllCategories = async (query: IGetCategory) => {
   const { searchTerm } = query;
@@ -62,6 +65,52 @@ const getAllCategories = async (query: IGetCategory) => {
 
 }
 
+const getCategoryById = async (id : string )=>{
+
+    const category = await prisma.category.findUnique({
+   
+    where: {
+      id,
+      isActive: true,
+    },
+
+    include: {
+      service: {
+        where: {
+          isActive: true,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        include: {
+          technician: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImage: true,
+                  phone: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!category) {
+    throw new AppError(httpStatus.NOT_FOUND,"Category not found" );
+  }
+
+  return category;
+};
+
+
 export const CategoryService = {
     getAllCategories,
+    getCategoryById
 }
