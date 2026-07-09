@@ -27,3 +27,7 @@ export interface TUpdateAvailability {
     endTime: string;
   }[];
 }
+
+export interface TUpdateBookingStatus {
+  status: "ACCEPTED" | "DECLINED";
+}

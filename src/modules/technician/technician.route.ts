@@ -34,5 +34,12 @@ router.put(
   TechnicianController.updateAvailability
 );
 
+router.patch(
+  "/bookings/:id",
+  auth(UserRole.TECHNICIAN),
+  validateRequest(TechnicianValidation.updateBookingStatusSchema),
+  TechnicianController.updateBookingStatus
+);
+
 
 export const TechnicianRoutes = router;

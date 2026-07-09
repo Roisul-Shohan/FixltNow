@@ -6,7 +6,7 @@ import { buildSearchCondition } from "../../utils/search";
 import { validateSlots } from "../availibility/availability.utils";
 import { AvailabilityService } from "../availibility/availibility.service";
 import { technicianSearchableFields } from "./technician.constant";
-import { IGetTechnician, TUpdateAvailability, TUpdateTechnicianProfile } from "./technician.interface";
+import { IGetTechnician, TUpdateAvailability, TUpdateBookingStatus, TUpdateTechnicianProfile } from "./technician.interface";
 import httpStatus from 'http-status'
 
 
@@ -301,6 +301,59 @@ const updateAvailability = async (
   });
 };
 
+const updateBookingStatus = async (
+  technicianUserId: string,
+  bookingId: string,
+  payload: TUpdateBookingStatus
+) => {
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      technician: {
+        userId: technicianUserId,
+      },
+    },
+    include: {
+      payment: true,
+    },
+  });
+
+  if (!booking) {
+    throw new AppError( httpStatus.NOT_FOUND,  "Booking not found." );
+  }
+
+  if (booking.status !== "PENDING") {  throw new AppError(  httpStatus.BAD_REQUEST, 
+       "Only pending bookings can be updated." );
+  }
+
+  const updatedBooking = await prisma.booking.update({
+    where: {
+      id: booking.id,
+    },
+    data: {
+      status: payload.status,
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+
+      service: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
+  });
+
+  return updatedBooking;
+};
+
 
 
 export const TechnicianService = {
@@ -308,4 +361,5 @@ export const TechnicianService = {
   getTechnicianById,
   updateProfile,
   updateAvailability,
+  updateBookingStatus,
 };

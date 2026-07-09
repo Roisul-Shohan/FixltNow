@@ -1,5 +1,6 @@
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
+import { BookingService } from "../booking/booking.service";
 import { TechnicianService } from "./technician.service";
 import httpStatus from "http-status";
 
@@ -59,10 +60,27 @@ const updateAvailability = catchAsync(async (req, res) => {
   });
 });
 
+const updateBookingStatus = catchAsync(async (req, res) => {
+  const result = await TechnicianService.updateBookingStatus
+  (
+    req.user?.id as string,
+    req.params.id  as string,
+    req.body
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Booking status updated successfully.",
+    data: result,
+  });
+});
+
 
 export const TechnicianController = {
   getAllTechnicians,
   getTechnicianById,
   updateProfile,
   updateAvailability,
+  updateBookingStatus
 };

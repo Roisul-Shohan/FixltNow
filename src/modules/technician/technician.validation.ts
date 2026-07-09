@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BookingStatus } from "../../../prisma/generated/prisma/enums";
 
 const updateTechnicianProfileSchema = z.object({
   body: z.object({
@@ -29,8 +30,19 @@ export const updateAvailabilitySchema = z.object({
   }),
 });
 
+const updateBookingStatusSchema = z.object({
+  body: z.object({
+    status: z.enum([
+      BookingStatus.ACCEPTED,
+      BookingStatus.DECLINED,
+    ]),
+  }),
+});
+
+
 
 export const TechnicianValidation = {
   updateTechnicianProfileSchema,
   updateAvailabilitySchema,
+  updateBookingStatusSchema,
 };
