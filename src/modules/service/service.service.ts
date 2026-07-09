@@ -1,7 +1,11 @@
 
 import AppError from "../../errors/AppErrors";
 import { prisma } from "../../lib/prisma";
-import { ICreateService } from "./service.interface";
+import { buildFilterCondition } from "../../utils/filter";
+import { calculatePagination } from "../../utils/pagination";
+import { buildSearchCondition } from "../../utils/search";
+import { serviceFilterableFields, serviceSearchableFields } from "./service.constant";
+import { ICreateService, IgetService } from "./service.interface";
 import httpStatus from "http-status";
 
 const createService = async (payload : ICreateService) =>{
@@ -76,11 +80,90 @@ return service;
 
 
 
+const getAllServices = async(query : IgetService) =>{
 
+    const {searchTerm,rating ,... filters}=query;
+
+    const {
+            page,
+            limit,
+            sortBy,
+            sortOrder,
+            skip,
+        } = calculatePagination({
+            page : query.page,
+            limit : query.limit,
+            sortBy : query.sortBy,
+            sortOrder :query.sortOrder,
+    });
+
+    let andConditions =buildFilterCondition(filters,serviceFilterableFields);
+    let orCondition = buildSearchCondition(searchTerm,serviceSearchableFields);
+
+    if (rating) {
+        andConditions.push({
+            averageRating: {
+                gte: Number(rating),
+            },
+        });
+    }
+
+    const services = await prisma.service.findMany({
+        where:{
+            AND :[
+                ... andConditions,
+                orCondition
+            ]
+        },
+
+      include: {
+      category: true,
+
+      technician: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+    },
+    skip,
+    take : limit ,
+    orderBy :{
+        [sortBy] : sortOrder
+    },
+
+    });
+
+    const total = await prisma.service.count({
+        where :{
+            AND :[
+                ... andConditions,
+                orCondition
+            ]
+        }
+    });
+
+
+    return {
+     meta: {
+     page,
+     limit,
+     total,
+     },
+
+    data: services,
+  };
+};
 
 
 
 
 export const ServiceService = {
   createService,
+  getAllServices,
 };

@@ -15,5 +15,10 @@ router.post(
   ServiceController.createService
 );
 
+router.get(
+  "/",
+  ServiceController.getAllServices
+);
+
 
 export const serviceRouter =router;
