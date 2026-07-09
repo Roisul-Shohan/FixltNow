@@ -10,10 +10,14 @@ model Service {
 
   isActive      Boolean @default(true)
 
+  location       String
+  averageRating  Float    @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   technician TechnicianProfile  @relation(fields: [technicianId],references: [id],onDelete: Cascade)
   category Category @relation(fields: [categoryId],references: [id],onDelete: Cascade)
   booking Booking[]
+  review Review[]
 }
