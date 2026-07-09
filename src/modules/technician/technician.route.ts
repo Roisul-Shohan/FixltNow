@@ -35,6 +35,13 @@ router.put(
 );
 
 router.patch(
+  "/bookings/:id/complete",
+  auth(UserRole.TECHNICIAN),
+  validateRequest(TechnicianValidation.completeBookingSchema),
+  TechnicianController.completeBooking
+);
+
+router.patch(
   "/bookings/:id",
   auth(UserRole.TECHNICIAN),
   validateRequest(TechnicianValidation.updateBookingStatusSchema),

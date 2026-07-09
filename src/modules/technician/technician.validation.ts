@@ -39,10 +39,17 @@ const updateBookingStatusSchema = z.object({
   }),
 });
 
+export const completeBookingSchema = z.object({
+  body: z.object({
+    status: z.literal(BookingStatus.COMPLETED),
+  }),
+});
+
 
 
 export const TechnicianValidation = {
   updateTechnicianProfileSchema,
   updateAvailabilitySchema,
   updateBookingStatusSchema,
+  completeBookingSchema,
 };

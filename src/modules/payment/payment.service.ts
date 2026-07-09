@@ -202,7 +202,7 @@ const confirmPayment = async (
             id: payment.bookingId,
           },
           data: {
-            status: BookingStatus.COMPLETED,
+            status: BookingStatus.PAID,
           },
         });
       });

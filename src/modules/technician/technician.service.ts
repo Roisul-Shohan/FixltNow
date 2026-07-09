@@ -1,3 +1,4 @@
+import { BookingStatus, PaymentStatus } from "../../../prisma/generated/prisma/enums";
 import AppError from "../../errors/AppErrors";
 import { prisma } from "../../lib/prisma";
 import { buildFilterCondition } from "../../utils/filter";
@@ -354,6 +355,63 @@ const updateBookingStatus = async (
   return updatedBooking;
 };
 
+const completeBooking = async( userId :string , bookingId :string) =>{
+
+   const booking =await prisma.booking.findFirst({
+     where :{
+      id :bookingId,
+      technician :{
+        userId
+      }
+     },
+     include :{
+      payment : true,
+     }
+   });
+
+  if (!booking) {
+    throw new AppError(httpStatus.NOT_FOUND,"Booking not found." );
+  }
+
+  if (booking.status !== BookingStatus.PAID) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Only paid bookings can be marked as completed.");
+  }
+
+  if ( !booking.payment || booking.payment.status !== PaymentStatus.SUCCEEDED) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Payment has not been completed.");
+  }
+
+    const updatedBooking = await prisma.booking.update({
+    where: {
+      id: booking.id,
+    },
+    data: {
+      status: BookingStatus.COMPLETED,
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      service: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
+  });
+
+  return updatedBooking;
+};
+
+
+
+
+
 
 
 export const TechnicianService = {
@@ -362,4 +420,5 @@ export const TechnicianService = {
   updateProfile,
   updateAvailability,
   updateBookingStatus,
+  completeBooking,
 };
