@@ -8,6 +8,7 @@ import { AdminRoutes } from "./modules/admin/admin.route";
 import { serviceRouter } from "./modules/service/service.route";
 import { TechnicianRoutes } from "./modules/technician/technician.route";
 import { CategoryRouter } from "./modules/category/category.route";
+import { BookingRoutes } from "./modules/booking/booking.route";
 const app: Application = express();
 
 app.use(cors());
@@ -25,6 +26,7 @@ app.use("/api/admin", AdminRoutes);
 app.use("/api/services",serviceRouter);
 app.use("/api/technicians",TechnicianRoutes);
 app.use("/api/categories",CategoryRouter);
+app.use("/api/bookings", BookingRoutes);
 
 
 
