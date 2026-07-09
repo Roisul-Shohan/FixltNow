@@ -4,8 +4,10 @@ import { buildFilterCondition } from "../../utils/filter";
 import { calculatePagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { technicianSearchableFields } from "./technician.constant";
-import { IGetTechnician } from "./technician.interface";
+import { IGetTechnician, TUpdateTechnicianProfile } from "./technician.interface";
 import httpStatus from 'http-status'
+
+
 const getAllTechnicians = async (query: IGetTechnician) => {
   const { searchTerm, rating, yearsOfExperience, ...filters } = query;
 
@@ -147,9 +149,79 @@ const getTechnicianById = async (id: string) => {
   return technician;
 };
 
+const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=>{
+    
+    const {name,phone,profileImage,bio,yearsOfExperience}=payload;
+
+    const technician = await prisma.technicianProfile.findUnique({
+        where : {userId}
+    });
+
+    if(!technician){
+        throw new AppError(httpStatus.NOT_FOUND, "Technician not found");
+    }
+
+  const userData: Record<string, any> = {};
+  const technicianData: Record<string, any> = {};
+
+  if (name !== undefined) userData.name = name;
+  if (phone !== undefined) userData.phone = phone;
+  if (profileImage !== undefined)
+    userData.profileImage = profileImage;
+
+  if (bio !== undefined)
+    technicianData.bio = bio;
+
+  if (yearsOfExperience !== undefined)
+    technicianData.yearsOfExperience = yearsOfExperience;
+
+  const result = await prisma.$transaction(async (tx) => {
+    if (Object.keys(userData).length > 0) {
+      await tx.user.update({
+        where: {
+          id: userId,
+        },
+        data: userData,
+      });
+    }
+
+    if (Object.keys(technicianData).length > 0) {
+      await tx.technicianProfile.update({
+        where: {
+          userId,
+        },
+        data: technicianData,
+      });
+    }
+
+    return await tx.technicianProfile.findUnique({
+      where: {
+        userId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            profileImage: true,
+            role: true,
+            status: true,
+          },
+        },
+      },
+    });
+  });
+
+  return result;
+
+}
+
 
 
 export const TechnicianService = {
   getAllTechnicians,
-  getTechnicianById
+  getTechnicianById,
+  updateProfile,
 };

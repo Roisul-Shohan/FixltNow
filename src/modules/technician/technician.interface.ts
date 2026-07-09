@@ -10,3 +10,12 @@ export interface IGetTechnician extends TechnicianProfileWhereInput {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
+
+export interface TUpdateTechnicianProfile {
+  name?: string;
+  phone?: string;
+  profileImage?: string;
+
+  bio?: string;
+  yearsOfExperience?: number;
+}
