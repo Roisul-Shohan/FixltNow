@@ -27,5 +27,12 @@ router.put(
   TechnicianController.updateProfile
 );
 
+router.put(
+  "/availability",
+  auth(UserRole.TECHNICIAN),
+  validateRequest(TechnicianValidation.updateAvailabilitySchema),
+  TechnicianController.updateAvailability
+);
+
 
 export const TechnicianRoutes = router;

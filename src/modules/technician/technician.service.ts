@@ -3,8 +3,10 @@ import { prisma } from "../../lib/prisma";
 import { buildFilterCondition } from "../../utils/filter";
 import { calculatePagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
+import { validateSlots } from "../availibility/availability.utils";
+import { AvailabilityService } from "../availibility/availibility.service";
 import { technicianSearchableFields } from "./technician.constant";
-import { IGetTechnician, TUpdateTechnicianProfile } from "./technician.interface";
+import { IGetTechnician, TUpdateAvailability, TUpdateTechnicianProfile } from "./technician.interface";
 import httpStatus from 'http-status'
 
 
@@ -146,7 +148,14 @@ const getTechnicianById = async (id: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Technician not found");
   }
 
-  return technician;
+  const availability =
+  await AvailabilityService.getAvailability(id);
+
+
+  return {
+    technician,
+    availability
+  };
 };
 
 const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=>{
@@ -218,10 +227,85 @@ const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=
 
 }
 
+const updateAvailability = async (
+  userId: string,
+  payload: TUpdateAvailability
+) => {
+
+  const technicianProfile = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!technicianProfile) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Technician profile not found"
+    );
+  }
+
+  const technicianId = technicianProfile.id;
+
+  validateSlots(payload.slots);
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const selectedDate = new Date(payload.date);
+  selectedDate.setHours(0,0,0,0);
+
+  const maxDate = new Date(today);
+  maxDate.setDate(today.getDate() + 6);
+
+  if (
+    selectedDate < today ||
+    selectedDate > maxDate
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "You can update only today and the next 6 days."
+    );
+  }
+
+  await prisma.$transaction(async (tx) => {
+
+    await tx.availability.deleteMany({
+      where: {
+        technicianId,
+        date: selectedDate,
+      },
+    });
+
+    if (payload.slots.length === 0) {
+      return;
+    }
+
+    await tx.availability.createMany({
+      data: payload.slots.map((slot) => ({
+        technicianId,
+        date: selectedDate,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      })),
+    });
+  });
+
+  return prisma.availability.findMany({
+    where: {
+      technicianId,
+      date: selectedDate,
+    },
+    orderBy: {
+      startTime: "asc",
+    },
+  });
+};
+
 
 
 export const TechnicianService = {
   getAllTechnicians,
   getTechnicianById,
   updateProfile,
+  updateAvailability,
 };

@@ -19,3 +19,11 @@ export interface TUpdateTechnicianProfile {
   bio?: string;
   yearsOfExperience?: number;
 }
+
+export interface TUpdateAvailability {
+  date: string;
+  slots: {
+    startTime: string;
+    endTime: string;
+  }[];
+}

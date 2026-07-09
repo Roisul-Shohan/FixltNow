@@ -1,15 +1,15 @@
 model Availability {
-  id            String @id @default(uuid()) @db.Uuid
+  id           String   @id @default(uuid()) @db.Uuid
 
-  technicianId  String @db.Uuid
+  technicianId String   @db.Uuid
 
-  date          DateTime @db.Date
-  startTime     DateTime @db.Time(6)
-  endTime       DateTime @db.Time(6)
+  date         DateTime @db.Date
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  startTime    String
+  endTime      String
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   technician TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
-
 }

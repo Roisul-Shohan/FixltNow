@@ -14,6 +14,23 @@ const updateTechnicianProfileSchema = z.object({
   }),
 });
 
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+export const updateAvailabilitySchema = z.object({
+  body: z.object({
+    date: z.string().date(),
+
+    slots: z.array(
+      z.object({
+        startTime: z.string().regex(timeRegex),
+        endTime: z.string().regex(timeRegex),
+      })
+    ),
+  }),
+});
+
+
 export const TechnicianValidation = {
   updateTechnicianProfileSchema,
+  updateAvailabilitySchema,
 };

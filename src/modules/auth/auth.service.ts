@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import config from "../../config";
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import type { StringValue } from "ms";
+import { createDefaultAvailability } from "../../utils/createDefaultAvailability";
 
 const registerUser = async (payload : TRegisterUser)=>{
 
@@ -33,12 +34,16 @@ const registerUser = async (payload : TRegisterUser)=>{
         });
 
         if(role === "TECHNICIAN"){
-            await tx.technicianProfile.create({
+           const technician = await tx.technicianProfile.create({
                 data :{
                     userId : createdUser.id,
                     bio :payload.bio,
                     yearsOfExperience : payload.yearsOfExperience,
                 },
+            });
+
+            await tx.availability.createMany({
+                data: createDefaultAvailability(technician.id)
             });
         }
 
