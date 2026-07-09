@@ -1,11 +1,16 @@
 import Stripe from "stripe";
 import config from "../../config";
-import { TCreatePayment } from "./payment.interface";
+import { IGetPayments, TCreatePayment } from "./payment.interface";
 import { prisma } from "../../lib/prisma";
 import httpStatus from "http-status";
 import AppError from "../../errors/AppErrors";
 import { BookingStatus, PaymentStatus } from "../../../prisma/generated/prisma/enums";
-import { currency } from "./payment.constant";
+import { currency, paymentFilterableFields, paymentSearchableFields } from "./payment.constant";
+import { calculatePagination } from "../../utils/pagination";
+import { SortOrder } from "../../../prisma/generated/prisma/internal/prismaNamespace";
+import { buildFilterCondition } from "../../utils/filter";
+import { buildSearchCondition } from "../../utils/search";
+import { Prisma } from "../../../prisma/generated/prisma/client";
 
 const stripe = new Stripe(config.stripe_secret_key!);
 
@@ -104,7 +109,7 @@ if (!stripeCustomerId) {
 
         amount: booking.totalAmount,
 
-        currency: "usd",
+        currency: currency,
 
         stripeCustomerId: stripeCustomerId,
 
@@ -154,7 +159,7 @@ const confirmPayment = async (
 
   switch (event.type) {
     case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object ;
 
       const payment = await prisma.payment.findUnique({
         where: {
@@ -208,7 +213,7 @@ const confirmPayment = async (
     case "checkout.session.expired": {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      await prisma.payment.updateMany({
+      await prisma.payment.update({
         where: {
           stripeCheckoutSessionId: session.id,
         },
@@ -224,7 +229,7 @@ const confirmPayment = async (
       const paymentIntent =
         event.data.object as Stripe.PaymentIntent;
 
-      await prisma.payment.updateMany({
+      await prisma.payment.update({
         where: {
           stripePaymentIntentId: paymentIntent.id,
         },
@@ -242,8 +247,185 @@ const confirmPayment = async (
   };
 };
 
+const getMyPayments = async (
+  customerId: string,
+  query: IGetPayments
+) => {
+  const { searchTerm, ...filters } = query;
+
+  const {
+    page,
+    limit,
+    skip,
+    sortBy,
+    sortOrder,
+  } = calculatePagination({
+    page :query.page,
+    limit : query.limit,
+    sortBy :query.sortBy,
+    sortOrder:query.sortOrder,
+}
+  );
+
+  const andConditions = buildFilterCondition(
+    filters,
+    paymentFilterableFields
+  );
+
+  const orCondition = buildSearchCondition(
+    searchTerm,
+    paymentSearchableFields
+  );
+
+  const whereConditions = {
+    customerId,
+    AND: [...andConditions],
+  };
+
+  if (Object.keys(orCondition).length) {
+    whereConditions.AND?.push(orCondition);
+  }
+
+ const payments = await prisma.payment.findMany({
+  where: whereConditions,
+
+  select: {
+    id: true,
+    amount: true,
+    currency: true,
+    paymentMethod: true,
+    status: true,
+    paidAt: true,
+
+    booking: {
+      select: {
+        id: true,
+        bookingDate: true,
+        status: true,
+
+        service: {
+          select: {
+            title: true,
+          },
+        },
+
+        technician: {
+          select: {
+            user: {
+              select: {
+                name: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+
+  skip,
+  take: limit,
+
+  orderBy: {
+    [sortBy]: sortOrder,
+  },
+});
+
+  const total = await prisma.payment.count({
+    where: whereConditions,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+
+    data: payments,
+  };
+};
+
+const getPayentById = async ( userId :string , paymentId : string) =>{
+
+   const payment = await prisma.payment.findFirst({
+        where: {
+        id: paymentId,
+        customerId :userId,
+        },
+
+        select: {
+        id: true,
+        amount: true,
+        currency: true,
+        paymentMethod: true,
+        status: true,
+        paidAt: true,
+        createdAt: true,
+
+        booking: {
+            select: {
+            id: true,
+            bookingDate: true,
+            startTime: true,
+            endTime: true,
+            hourlyRate: true,
+            totalAmount: true,
+            customerAddress: true,
+            status: true,
+
+            service: {
+                select: {
+                id: true,
+                title: true,
+                description: true,
+                location: true,
+                hourlyRate: true,
+
+                category: {
+                    select: {
+                    id: true,
+                    name: true,
+                    },
+                },
+                },
+            },
+
+            technician: {
+                select: {
+                id: true,
+                bio: true,
+                yearsOfExperience: true,
+                averageRating: true,
+                totalReviews: true,
+
+                user: {
+                    select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    phone: true,
+                    profileImage: true,
+                    },
+                },
+                },
+            },
+            },
+        },
+        },
+    });
+
+  if (!payment) {
+    throw new AppError( httpStatus.NOT_FOUND, "Payment not found." );
+  }
+
+  return payment;
+};
+    
 
 export const PaymentService = {
   createPaymentSession,
   confirmPayment,
+  getMyPayments,
+  getPayentById,
 };

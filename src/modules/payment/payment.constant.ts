@@ -1,4 +1,4 @@
-export const currency = "usd";
+export const currency = "bdt";
 
 export const paymentSearchableFields = [
   "booking.service.title",
