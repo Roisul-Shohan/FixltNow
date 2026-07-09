@@ -6,6 +6,7 @@ import globalErrorHandler from "./middlewares/globalErrorHandler";
 import { authRoutes } from "./modules/auth/auth.route";
 import { AdminRoutes } from "./modules/admin/admin.route";
 import { serviceRouter } from "./modules/service/service.route";
+import { TechnicianRoutes } from "./modules/technician/technician.route";
 const app: Application = express();
 
 app.use(cors());
@@ -18,9 +19,10 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Helllo");
 });
 
-app.use("/api/auth", authRoutes)
+app.use("/api/auth", authRoutes);
 app.use("/api/admin", AdminRoutes);
-app.use("/api/services",serviceRouter)
+app.use("/api/services",serviceRouter);
+app.use("/api/technicians",TechnicianRoutes);
 
 
 
