@@ -9,9 +9,12 @@ import { serviceRouter } from "./modules/service/service.route";
 import { TechnicianRoutes } from "./modules/technician/technician.route";
 import { CategoryRouter } from "./modules/category/category.route";
 import { BookingRoutes } from "./modules/booking/booking.route";
+import { PaymentRoutes } from "./modules/payment/payment.router";
 const app: Application = express();
 
 app.use(cors());
+
+app.use("/api/payments/confirm", express.raw({ type: "application/json" }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +30,7 @@ app.use("/api/services",serviceRouter);
 app.use("/api/technicians",TechnicianRoutes);
 app.use("/api/categories",CategoryRouter);
 app.use("/api/bookings", BookingRoutes);
+app.use("/api/payments", PaymentRoutes);
 
 
 

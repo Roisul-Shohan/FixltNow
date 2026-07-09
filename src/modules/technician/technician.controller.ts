@@ -1,6 +1,5 @@
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
-import { BookingService } from "../booking/booking.service";
 import { TechnicianService } from "./technician.service";
 import httpStatus from "http-status";
 
@@ -64,7 +63,7 @@ const updateBookingStatus = catchAsync(async (req, res) => {
   const result = await TechnicianService.updateBookingStatus
   (
     req.user?.id as string,
-    req.params.id  as string,
+    req.params.id as string,
     req.body
   );
 
@@ -82,5 +81,5 @@ export const TechnicianController = {
   getTechnicianById,
   updateProfile,
   updateAvailability,
-  updateBookingStatus
+  updateBookingStatus,
 };

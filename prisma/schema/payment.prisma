@@ -1,23 +1,33 @@
 model Payment {
-  id                     String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  bookingId              String @unique @db.Uuid
-  customerId             String @db.Uuid
+  bookingId String @unique @db.Uuid
+  customerId String @db.Uuid
 
-  amount                 Decimal @db.Decimal(10,2)
-  currency               String
+  amount Decimal @db.Decimal(10,2)
+  currency String @default("usd")
 
-  stripePaymentIntentId  String
+  paymentMethod String?
 
-  paymentMethod          String
+  status PaymentStatus @default(PENDING)
 
-  status                 PaymentStatus
+  stripeCustomerId String?
 
-  paidAt                 DateTime?
+  stripeCheckoutSessionId String? @unique
+
+  stripePaymentIntentId String? @unique
+
+  stripeChargeId String? @unique
+
+  paidAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   customer User @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([bookingId])
+  @@index([status])
 }
