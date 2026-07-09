@@ -1,8 +1,13 @@
 import httpStatus from "http-status";
-import { TCreateBooking } from "./booking.interface";
+import { IGetBookings, TCreateBooking } from "./booking.interface";
 import { prisma } from "../../lib/prisma";
 import AppError from "../../errors/AppErrors";
 import { Prisma } from "../../../prisma/generated/prisma/browser";
+import { calculatePagination } from "../../utils/pagination";
+import { buildFilterCondition } from "../../utils/filter";
+import { bookingFilterableFields, bookingSearchableFields } from "./booking.constant";
+import { buildSearchCondition } from "../../utils/search";
+import { formatTime, formatDate } from "../../utils/formatDateTime";
 
 
 const timeToMinutes = (time: string) => {
@@ -19,6 +24,38 @@ const minutesToTime = (minutes: number) => {
     2,
     "0"
   )}`;
+};
+
+const formatBooking = (booking: {
+  id: string;
+  bookingDate: Date;
+  startTime: Date;
+  endTime: Date;
+  status: string;
+  totalAmount: any;
+  service: { id: string; title: string };
+  technician: {
+    id: string;
+    user: { name: string; profileImage: string | null };
+  };
+}) => {
+  const { service, technician, ...rest } = booking;
+  return {
+    ...rest,
+    bookingDate: formatDate(booking.bookingDate),
+    startTime: formatTime(booking.startTime),
+    endTime: formatTime(booking.endTime),
+    totalAmount: booking.totalAmount.toString(),
+    service: {
+      id: service.id,
+      title: service.title,
+    },
+    technician: {
+      id: technician.id,
+      name: technician.user.name,
+      profileImage: technician.user.profileImage,
+    },
+  };
 };
 
 
@@ -163,47 +200,240 @@ const createBooking = async (
       });
     }
 
-    return tx.booking.findUnique({
+    const found = await tx.booking.findUnique({
       where: {
         id: booking.id,
       },
 
       include: {
-        customer: {
+        service: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            phone: true,
+            title: true,
           },
         },
 
         technician: {
-          include: {
+          select: {
+            id: true,
             user: {
               select: {
-                id: true,
                 name: true,
-                phone: true,
                 profileImage: true,
               },
             },
           },
         },
+      },
+    });
 
-        service: {
-          include: {
-            category: true,
+    if (!found) {
+      throw new AppError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Booking not found after creation"
+      );
+    }
+
+    return formatBooking(found);
+  });
+};
+
+
+const getMyBookings = async (
+  customerId: string,
+  query: IGetBookings
+) => {
+  const { searchTerm, ...filters } = query;
+
+  const {
+    page,
+    limit,
+    skip,
+    sortBy,
+    sortOrder,
+  } = calculatePagination({
+    page: query.page,
+    limit: query.limit,
+    sortBy: query.sortBy,
+    sortOrder: query.sortOrder,
+  });
+
+   const andConditions = buildFilterCondition(
+    filters,
+    bookingFilterableFields
+  );
+
+  const orCondition = buildSearchCondition(
+    searchTerm,
+    bookingSearchableFields
+  );
+
+   const whereConditions: any = {
+    customerId,
+    AND: [...andConditions],
+  };
+
+  if (orCondition.OR?.length) {
+    whereConditions.AND.push(orCondition);
+  }
+
+  const bookings = await prisma.booking.findMany({
+    where: whereConditions,
+
+    select: {
+      id: true,
+      bookingDate: true,
+      startTime: true,
+      endTime: true,
+      status: true,
+      totalAmount: true,
+
+      service: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+
+      technician: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              name: true,
+              profileImage: true,
+            },
           },
         },
       },
-    });
+    },
+
+    skip,
+    take: limit,
+
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
   });
+
+  const total = await prisma.booking.count({
+    where: whereConditions,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+
+    data: bookings.map(formatBooking),
+  };
 };
+
+const getBookingById = async (
+  customerId: string,
+  bookingId: string
+) => {
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      customerId,
+    },
+
+    select: {
+      id: true,
+
+      bookingDate: true,
+      startTime: true,
+      endTime: true,
+
+      hourlyRate: true,
+      totalAmount: true,
+
+      customerAddress: true,
+
+      status: true,
+
+      createdAt: true,
+
+      service: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          hourlyRate: true,
+          location: true,
+
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+
+      technician: {
+        select: {
+          id: true,
+          bio: true,
+          yearsOfExperience: true,
+          averageRating: true,
+          totalReviews: true,
+
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+
+      payment: {
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          paymentMethod: true,
+          currency: true,
+          stripePaymentIntentId: true,
+          paidAt: true,
+          createdAt: true,
+        },
+      },
+
+      review: {
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  if (!booking) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Booking not found"
+    );
+  }
+
+  return booking;
+};
+
 
 
     
 
 export const BookingService = {
   createBooking,
+  getMyBookings,
+  getBookingById,
 };
