@@ -8,6 +8,7 @@ import { buildFilterCondition } from "../../utils/filter.js";
 import { bookingFilterableFields, bookingSearchableFields } from "./booking.constant.js";
 import { buildSearchCondition } from "../../utils/search.js";
 import { formatTime, formatDate } from "../../utils/formatDateTime.js";
+import { MINIMUM_HOURLY_RATE } from "../service/service.constant.js";
 
 
 const timeToMinutes = (time: string) => {
@@ -85,6 +86,13 @@ const createBooking = async (
 
     if (!service) {
         throw new AppError(httpStatus.NOT_FOUND, "Service not found");
+    }
+
+    if (Number(service.hourlyRate) < MINIMUM_HOURLY_RATE) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            `Service hourly rate must be at least ${MINIMUM_HOURLY_RATE}.`
+        );
     }
 
     const bookingDate = new Date(payload.bookingDate);

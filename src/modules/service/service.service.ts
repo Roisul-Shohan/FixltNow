@@ -4,7 +4,7 @@ import { prisma } from "../../lib/prisma.js";
 import { buildFilterCondition } from "../../utils/filter.js";
 import { calculatePagination, getPagination } from "../../utils/pagination.js";
 import { buildSearchCondition } from "../../utils/search.js";
-import { serviceFilterableFields, serviceSearchableFields } from "./service.constant.js";
+import { serviceFilterableFields, serviceSearchableFields, MINIMUM_HOURLY_RATE } from "./service.constant.js";
 import { ICreateService, IgetService } from "./service.interface.js";
 import httpStatus from "http-status";
 
@@ -46,6 +46,13 @@ const createService = async (payload : ICreateService) =>{
 
     if(existingService){
         throw new AppError(httpStatus.CONFLICT,"You alrady offer this service")
+    }
+
+    if (hourlyRate < MINIMUM_HOURLY_RATE) {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            `Hourly rate must be at least ${MINIMUM_HOURLY_RATE}.`
+        );
     }
 
     const service = await prisma.service.create({

@@ -5,7 +5,7 @@ import { prisma } from "../../lib/prisma.js";
 import httpStatus from "http-status";
 import AppError from "../../errors/AppErrors.js";
 import { BookingStatus, PaymentStatus } from "@prisma/client";
-import { currency, paymentFilterableFields, paymentSearchableFields } from "./payment.constant.js";
+import { currency, paymentFilterableFields, paymentSearchableFields, MINIMUM_PAYMENT_AMOUNT } from "./payment.constant.js";
 import { calculatePagination, getPagination } from "../../utils/pagination.js";
 import { buildFilterCondition } from "../../utils/filter.js";
 import { buildSearchCondition } from "../../utils/search.js";
@@ -46,6 +46,13 @@ const createPaymentSession = async (
 
   if (existingPayment && existingPayment.status === PaymentStatus.SUCCEEDED ) {
      throw new AppError(httpStatus.BAD_REQUEST,  "This booking has already been paid." );
+  }
+
+  if (Number(booking.totalAmount) < MINIMUM_PAYMENT_AMOUNT) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `The minimum payment amount is ${MINIMUM_PAYMENT_AMOUNT} ${currency.toUpperCase()}.`
+    );
   }
 
   let stripeCustomerId = booking.customer.stripeCustomerId;

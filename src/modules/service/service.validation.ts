@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MINIMUM_HOURLY_RATE } from "./service.constant.js";
 
 const createServiceSchema = z.object({
   body: z.object({
@@ -22,6 +23,9 @@ const createServiceSchema = z.object({
       })
       .positive({
         message: "Hourly rate must be greater than 0.",
+      })
+      .min(MINIMUM_HOURLY_RATE, {
+        message: `Hourly rate must be at least ${MINIMUM_HOURLY_RATE}.`,
       }),
   }),
 });
