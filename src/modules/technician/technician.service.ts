@@ -7,7 +7,7 @@ import { buildSearchCondition } from "../../utils/search";
 import { validateSlots } from "../availibility/availability.utils";
 import { AvailabilityService } from "../availibility/availibility.service";
 import { technicianSearchableFields } from "./technician.constant";
-import { IGetTechnician, TUpdateAvailability, TUpdateBookingStatus, TUpdateTechnicianProfile } from "./technician.interface";
+import { IGetTechnician, TUpdateAvailability, TUpdateBookingStatus, TUpdateService, TUpdateTechnicianProfile } from "./technician.interface";
 import httpStatus from 'http-status'
 
 
@@ -403,6 +403,115 @@ const completeBooking = async( userId :string , bookingId :string) =>{
   return updatedBooking;
 };
 
+const updateService = async (userId: string,serviceId: string,payload: TUpdateService
+) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
+
+  if (!technician) {
+    throw new AppError( httpStatus.NOT_FOUND,"Technician profile not found.");
+  }
+
+  const service = await prisma.service.findFirst({
+    where: {
+      id: serviceId,
+      technicianId: technician.id,
+    },
+  });
+
+  if (!service) {
+    throw new AppError(httpStatus.NOT_FOUND, "Service not found." );
+  }
+
+  if (payload.categoryId) {
+    const category = await prisma.category.findFirst({
+      where: {
+        id: payload.categoryId,
+        isActive: true,
+      },
+    });
+
+    if (!category) {
+      throw new AppError(httpStatus.NOT_FOUND,"Category not found.");
+    }
+  }
+
+  const result = await prisma.service.update({
+    where: {
+      id: serviceId,
+    },
+    data: payload,
+    include: {
+      category: true,
+      technician: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return result;
+};
+
+const deleteService = async (userId: string,serviceId: string
+) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: {
+      userId,
+    },
+  });
+
+  if (!technician) { 
+    throw new AppError(httpStatus.NOT_FOUND, "Technician profile not found."  );
+  }
+
+  const service = await prisma.service.findFirst({
+    where: {
+      id: serviceId,
+      technicianId: technician.id,
+    },
+  });
+
+  if (!service) {
+    throw new AppError( httpStatus.NOT_FOUND,"Service not found");
+  }
+
+  const bookingExists = await prisma.booking.findFirst({
+    where: {
+      serviceId,
+      status: {
+        in: [
+          "PENDING",
+          "ACCEPTED",
+          "PAID",
+        ],
+      },
+    },
+  });
+
+  if (bookingExists) {
+    throw new AppError(httpStatus.BAD_REQUEST,"Service cannot be deleted because it has active bookings");
+  }
+
+  await prisma.service.delete({
+    where: {
+      id: serviceId,
+    },
+  });
+
+  return null;
+};
+
 
 
 
@@ -416,4 +525,6 @@ export const TechnicianService = {
   updateAvailability,
   updateBookingStatus,
   completeBooking,
+  updateService,
+  deleteService
 };

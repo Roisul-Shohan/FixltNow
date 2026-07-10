@@ -48,5 +48,18 @@ router.patch(
   TechnicianController.updateBookingStatus
 );
 
+router.patch(
+  "/services/:id",
+  auth(UserRole.TECHNICIAN),
+  validateRequest(TechnicianValidation.updateServiceSchema),
+  TechnicianController.updateService
+);
+
+router.delete(
+  "/services/:id",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.deleteService
+);
+
 
 export const TechnicianRoutes = router;

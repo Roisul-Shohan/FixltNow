@@ -45,6 +45,31 @@ export const completeBookingSchema = z.object({
   }),
 });
 
+const updateServiceSchema = z.object({
+  body: z
+    .object({
+      title: z.string().trim().min(3).max(100).optional(),
+
+      description: z.string().trim().min(10).optional(),
+
+      hourlyRate: z.coerce.number().positive().optional(),
+
+      location: z.string().trim().optional(),
+
+      categoryId: z.string().uuid().optional(),
+      isActive: z.boolean().optional(),
+    })
+    .refine(
+      (data) =>
+        Object.keys(data).length > 0,
+      {
+        message: "At least one field is required.",
+      }
+    ),
+});
+
+
+
 
 
 export const TechnicianValidation = {
@@ -52,4 +77,5 @@ export const TechnicianValidation = {
   updateAvailabilitySchema,
   updateBookingStatusSchema,
   completeBookingSchema,
+  updateServiceSchema,
 };

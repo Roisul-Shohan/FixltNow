@@ -31,3 +31,12 @@ export interface TUpdateAvailability {
 export interface TUpdateBookingStatus {
   status: "ACCEPTED" | "DECLINED";
 }
+
+export type TUpdateService = {
+  title?: string;
+  description?: string;
+  hourlyRate?: number;
+  location?: string;
+  categoryId?: string;
+  isActive?: boolean;
+};

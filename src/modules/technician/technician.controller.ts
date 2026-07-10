@@ -91,6 +91,36 @@ const completeBooking = catchAsync(async (req, res) => {
 });
 
 
+const updateService = catchAsync(async (req, res) => {
+  const result = await TechnicianService.updateService(
+    req.user?.id as string,
+    req.params?.id as string,
+    req.body
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Service updated successfully.",
+    data: result,
+  });
+});
+
+const deleteService = catchAsync(async (req, res) => {
+  await TechnicianService.deleteService(
+    req.user?.id as string ,
+    req.params?.id as string
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Service deleted successfully.",
+    data: null,
+  });
+});
+
+
 export const TechnicianController = {
   getAllTechnicians,
   getTechnicianById,
@@ -98,4 +128,6 @@ export const TechnicianController = {
   updateAvailability,
   updateBookingStatus,
   completeBooking,
+  updateService,
+  deleteService,
 };
