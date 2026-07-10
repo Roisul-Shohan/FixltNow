@@ -150,9 +150,56 @@ const getMyProfile = async (id : string) =>{
     return user;
 }
 
+const refreshToken = async (payload : { refreshToken: string }) => {
+    const { refreshToken: token } = payload;
+
+    let decoded: JwtPayload;
+    try {
+        decoded = jwt.verify(token, config.jwt_refresh_secret!) as JwtPayload;
+    } catch {
+        throw new AppError(httpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        include: { technicianProfile: true },
+        omit: { password: true },
+    });
+
+    if (!user) {
+        throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    const jwtPayload: JwtPayload = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+    };
+
+    const accessToken = jwt.sign(
+        jwtPayload,
+        config.jwt_access_secret!,
+        {
+            expiresIn: config.jwt_access_expires_in as StringValue,
+        }
+    );
+
+    const newRefreshToken = jwt.sign(
+        jwtPayload,
+        config.jwt_refresh_secret!,
+        {
+            expiresIn: config.jwt_refresh_expires_in as StringValue,
+        }
+    );
+
+    return { accessToken, refreshToken: newRefreshToken };
+}
+
 
 export const AuthService = {
   registerUser,
   loginUser,
   getMyProfile,
+  refreshToken,
 };

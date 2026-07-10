@@ -47,7 +47,12 @@ import { z } from "zod";
 
 
 
+  const refreshTokenSchema = z.object({
+    body: z.object({}),
+  });
+
   export const AuthValidation = {
     registerSchema,
-    loginSchema
+    loginSchema,
+    refreshTokenSchema,
   }
