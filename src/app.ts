@@ -10,6 +10,7 @@ import { TechnicianRoutes } from "./modules/technician/technician.route";
 import { CategoryRouter } from "./modules/category/category.route";
 import { BookingRoutes } from "./modules/booking/booking.route";
 import { PaymentRoutes } from "./modules/payment/payment.router";
+import { ReviewRouter } from "./modules/review/review.route";
 const app: Application = express();
 
 app.use(cors());
@@ -31,7 +32,7 @@ app.use("/api/technicians",TechnicianRoutes);
 app.use("/api/categories",CategoryRouter);
 app.use("/api/bookings", BookingRoutes);
 app.use("/api/payments", PaymentRoutes);
-
+app.use("/api/reviews",ReviewRouter);
 
 
 
