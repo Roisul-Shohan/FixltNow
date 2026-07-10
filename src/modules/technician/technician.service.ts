@@ -2,7 +2,7 @@ import { BookingStatus, PaymentStatus } from "../../../prisma/generated/prisma/e
 import AppError from "../../errors/AppErrors";
 import { prisma } from "../../lib/prisma";
 import { buildFilterCondition } from "../../utils/filter";
-import { calculatePagination } from "../../utils/pagination";
+import { calculatePagination, getPagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { validateSlots } from "../availibility/availability.utils";
 import { AvailabilityService } from "../availibility/availibility.service";
@@ -20,12 +20,7 @@ const getAllTechnicians = async (query: IGetTechnician) => {
     sortBy,
     sortOrder,
     skip,
-  } = calculatePagination({
-    page: query.page,
-    limit: query.limit,
-    sortBy: query.sortBy,
-    sortOrder: query.sortOrder,
-  });
+  } = getPagination(query);
 
   const andConditions = [];
   const orCondition = buildSearchCondition(searchTerm, technicianSearchableFields);

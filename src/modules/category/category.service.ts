@@ -1,6 +1,6 @@
 import AppError from "../../errors/AppErrors";
 import { prisma } from "../../lib/prisma";
-import { calculatePagination } from "../../utils/pagination";
+import { calculatePagination, getPagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { categorySearchableFields } from "./category.constant";
 import { IGetCategory } from "./category.interface";
@@ -16,12 +16,7 @@ const getAllCategories = async (query: IGetCategory) => {
     sortBy,
     sortOrder,
     skip,
-  } = calculatePagination({
-    page: query.page,
-    limit: query.limit,
-    sortBy: query.sortBy,
-    sortOrder: query.sortOrder,
-  });
+  } = getPagination(query);
 
   const orCondition = buildSearchCondition(searchTerm,categorySearchableFields);
 

@@ -6,7 +6,7 @@ import httpStatus from "http-status";
 import AppError from "../../errors/AppErrors";
 import { BookingStatus, PaymentStatus } from "../../../prisma/generated/prisma/enums";
 import { currency, paymentFilterableFields, paymentSearchableFields } from "./payment.constant";
-import { calculatePagination } from "../../utils/pagination";
+import { calculatePagination, getPagination } from "../../utils/pagination";
 import { SortOrder } from "../../../prisma/generated/prisma/internal/prismaNamespace";
 import { buildFilterCondition } from "../../utils/filter";
 import { buildSearchCondition } from "../../utils/search";
@@ -259,13 +259,7 @@ const getMyPayments = async (
     skip,
     sortBy,
     sortOrder,
-  } = calculatePagination({
-    page :query.page,
-    limit : query.limit,
-    sortBy :query.sortBy,
-    sortOrder:query.sortOrder,
-}
-  );
+  } = getPagination(query);
 
   const andConditions = buildFilterCondition(
     filters,

@@ -14,7 +14,7 @@ export interface IgetCategory extends CategoryWhereInput{
     page?: string
     limit?: string
     sortOrder?: "asc"|"desc"
-    sortBy?: string  
+    sortBy?: string 
 }
 
 
@@ -22,3 +22,9 @@ export interface ICategory{
     name : string
     description ? : string
 }
+
+export type TUpdateCategory = {
+  name?: string;
+  description?: string;
+  isActive?: boolean;
+};

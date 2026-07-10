@@ -20,7 +20,38 @@ const createCategorySchema = z.object({
   }),
 });
 
+const updateCategorySchema = z.object({
+  body: z
+    .object({
+      name: z
+        .string()
+        .trim()
+        .min(2)
+        .max(100)
+        .optional(),
+
+      description: z
+        .string()
+        .trim()
+        .max(500)
+        .optional(),
+
+      isActive: z.boolean().optional(),
+    })
+    .refine(
+      (data) =>
+        data.name !== undefined ||
+        data.description !== undefined ||
+        data.isActive !== undefined,
+      {
+        message: "At least one field must be provided.",
+      }
+    ),
+});
+
+
 export const AdminValidation = {
   updateUserStatusSchema,
   createCategorySchema,
+  updateCategorySchema
 };

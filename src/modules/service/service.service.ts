@@ -2,7 +2,7 @@
 import AppError from "../../errors/AppErrors";
 import { prisma } from "../../lib/prisma";
 import { buildFilterCondition } from "../../utils/filter";
-import { calculatePagination } from "../../utils/pagination";
+import { calculatePagination, getPagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { serviceFilterableFields, serviceSearchableFields } from "./service.constant";
 import { ICreateService, IgetService } from "./service.interface";
@@ -90,12 +90,7 @@ const getAllServices = async(query : IgetService) =>{
             sortBy,
             sortOrder,
             skip,
-        } = calculatePagination({
-            page : query.page,
-            limit : query.limit,
-            sortBy : query.sortBy,
-            sortOrder :query.sortOrder,
-    });
+        } = getPagination(query);
 
     let andConditions =buildFilterCondition(filters,serviceFilterableFields);
     let orCondition = buildSearchCondition(searchTerm,serviceSearchableFields);

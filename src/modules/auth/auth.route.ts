@@ -27,4 +27,10 @@ router.get(
     AuthController.getMyProfile
 )
 
+router.post(
+  "/logout",
+  auth(UserRole.CUSTOMER, UserRole.TECHNICIAN, UserRole.ADMIN),
+  AuthController.logout
+);
+
 export const authRoutes =router;

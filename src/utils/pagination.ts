@@ -21,3 +21,12 @@ export const calculatePagination = (
     sortOrder,
   };
 };
+
+export const getPagination = (query: Partial<TPaginationOptions>): TPaginationReturn => {
+  return calculatePagination({
+    page: query.page,
+    limit: query.limit,
+    sortBy: query.sortBy,
+    sortOrder: query.sortOrder,
+  });
+};

@@ -1,9 +1,9 @@
 import { prisma } from "../../lib/prisma";
 import { buildFilterCondition } from "../../utils/filter";
-import { calculatePagination } from "../../utils/pagination";
+import { calculatePagination, getPagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { categoryFilterableFields, categorySearchableFields, userFilterableFields, userSearchableFields } from "./admin.constant";
-import { ICategory, IgetCategory, Igetuser } from "./admin.interface";
+import { ICategory, IgetCategory, Igetuser, TUpdateCategory } from "./admin.interface";
 import { UserWhereInput } from "../../../prisma/generated/prisma/models";
 import { UserStatus } from "../../../prisma/generated/prisma/enums";
 import httpStatus from "http-status";
@@ -20,13 +20,7 @@ const getAllUsers = async (query : Igetuser) =>{
     skip,
     sortBy,
     sortOrder,
-    } = calculatePagination({
-       page :query.page,
-       limit : query.limit,
-       sortBy: query.sortBy,
-       sortOrder: query.sortOrder,
-       
-    });
+    } = getPagination(query);
 
     const andConditions = buildFilterCondition(
         filters, userFilterableFields
@@ -137,7 +131,8 @@ const createCategory = async (payload :ICategory) =>{
 
 const getAllCategories = async ( query :IgetCategory) =>{
 
-    const {searchTerm , ...filters }= query;
+    const {searchTerm , isActive,...filters }= query;
+
 
     const {
         page,
@@ -145,15 +140,19 @@ const getAllCategories = async ( query :IgetCategory) =>{
         sortBy,
         sortOrder,
         skip,
-    } = calculatePagination({
-        page : query.page,
-        limit : query.limit,
-        sortBy : query.sortBy,
-        sortOrder :query.sortOrder,
-    });
+    } = getPagination(query);
 
     const andConditions = buildFilterCondition(filters,categoryFilterableFields);
     const orCondition = buildSearchCondition (searchTerm,categorySearchableFields);
+    if (typeof isActive === "string") {
+        andConditions.push({
+            isActive: isActive === "true",
+        });
+        } else if (typeof isActive === "boolean") {
+        andConditions.push({
+            isActive,
+        });
+    }
 
     const categories = await prisma.category.findMany({
         where:{
@@ -192,9 +191,53 @@ const getAllCategories = async ( query :IgetCategory) =>{
 
 }
 
+const updateCategory = async (id: string, payload: TUpdateCategory
+) => {
+  const category = await prisma.category.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!category) {
+    throw new AppError(httpStatus.NOT_FOUND,"Category not found.");
+  }
+
+  if (payload.name) {
+    const existingCategory = await prisma.category.findFirst({
+      where: {
+        name: {
+          equals: payload.name,
+          mode: "insensitive",
+        },
+        NOT: {
+          id,
+        },
+      },
+    });
+
+    if (existingCategory) {
+        throw new AppError( httpStatus.BAD_REQUEST, "Category name already exists." );
+    }
+  }
+
+  const result = await prisma.category.update({
+    where: {
+      id,
+    },
+    data: payload,
+  });
+
+  return result;
+};
+
+
+
+
 export const AdminService = {
   getAllUsers,
   updateUserStatus,
   createCategory,
   getAllCategories,
+  updateCategory,
 };

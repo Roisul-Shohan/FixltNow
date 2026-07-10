@@ -3,7 +3,7 @@ import { IGetBookings, TCreateBooking } from "./booking.interface";
 import { prisma } from "../../lib/prisma";
 import AppError from "../../errors/AppErrors";
 import { Prisma } from "../../../prisma/generated/prisma/browser";
-import { calculatePagination } from "../../utils/pagination";
+import { calculatePagination, getPagination } from "../../utils/pagination";
 import { buildFilterCondition } from "../../utils/filter";
 import { bookingFilterableFields, bookingSearchableFields } from "./booking.constant";
 import { buildSearchCondition } from "../../utils/search";
@@ -251,12 +251,7 @@ const getMyBookings = async (
     skip,
     sortBy,
     sortOrder,
-  } = calculatePagination({
-    page: query.page,
-    limit: query.limit,
-    sortBy: query.sortBy,
-    sortOrder: query.sortOrder,
-  });
+  } = getPagination(query);
 
    const andConditions = buildFilterCondition(
     filters,

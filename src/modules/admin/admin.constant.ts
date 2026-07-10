@@ -15,4 +15,5 @@ export const categorySearchableFields = [
 
 export const categoryFilterableFields = [
   "name",
+  "isActive",
 ];
