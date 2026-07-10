@@ -6,7 +6,7 @@ import { buildFilterCondition } from "../../utils/filter";
 import { calculatePagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { reviewFilterableFields, reviewSearchableFields } from "./review.constant";
-import { IGetReviews, TCreateReview } from "./review.interface";
+import { IGetReviews, IServiceReview, TCreateReview } from "./review.interface";
 import httpStatus from "http-status";
 
 
@@ -193,8 +193,140 @@ const getMyReviews = async(userId : string,query : IGetReviews) =>{
     
 }
 
+const getServiceReviews = async (serviceId: string,query :IServiceReview) => {
+  
+    const service = await prisma.service.findUnique({
+    where: {
+      id: serviceId,
+    },
+  });
+
+  if (!service) {
+    throw new AppError(httpStatus.NOT_FOUND, "Service not found.");
+  }
+
+   const {
+        page,
+        limit,
+        skip,
+        sortBy,
+        sortOrder,
+      } = calculatePagination({
+        page:query.page,
+        limit: query.limit,
+        sortBy: query.sortBy,
+        sortOrder: query.sortOrder,
+      });
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      serviceId,
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
+    skip,
+    take: limit,
+    orderBy:
+      sortBy && sortOrder
+        ? {
+            [sortBy]: sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
+  });
+   const total = await prisma.review.count({
+    where: {serviceId },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: reviews,
+  };
+
+};
+
+const getTechnicianReviews = async (technicianId: string,query :IServiceReview) => {
+  
+    const technician = await prisma.technicianProfile.findUnique({
+        where: {
+            id: technicianId,
+        },
+    });
+
+  if (!technician) {
+    throw new AppError(httpStatus.NOT_FOUND, "Technician not found.");
+  }
+
+   const {
+        page,
+        limit,
+        skip,
+        sortBy,
+        sortOrder,
+      } = calculatePagination({
+        page:query.page,
+        limit: query.limit,
+        sortBy: query.sortBy,
+        sortOrder: query.sortOrder,
+      });
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      technicianId,
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
+    skip,
+    take: limit,
+    orderBy:
+      sortBy && sortOrder
+        ? {
+            [sortBy]: sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
+  });
+
+   const total = await prisma.review.count({
+    where: {technicianId },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: reviews,
+  };
+
+};
+
+
 
 export const ReviewService = {
   createReview,
   getMyReviews,
+  getServiceReviews,
+  getTechnicianReviews,
 };

@@ -20,6 +20,7 @@ const createBooking = catchAsync(async (req, res) => {
 });
 
 const getMyBookings = catchAsync(async (req, res) => {
+ 
   const result = await BookingService.getMyBookings(
     req.user?.id as string,
     req.query

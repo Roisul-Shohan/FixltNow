@@ -16,3 +16,11 @@ export interface IGetReviews extends ReviewWhereInput{
 
   rating?: number;
 }
+
+export interface IServiceReview extends ReviewWhereInput{
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  rating?: number;
+}

@@ -35,7 +35,35 @@ const getMyReviews = catchAsync(async (req, res) => {
   });
 });
 
+const getServiceReviews = catchAsync(async (req, res) => {
+  const result = await ReviewService.getServiceReviews(req.params.serviceId as string,req.query);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Reviews retrieved successfully.",
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
+
+const getTechnicianReviews = catchAsync(async (req, res) => {
+  const result = await ReviewService.getTechnicianReviews(req.params.technicianId as string,req.query);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Technician reviews retrieved successfully.",
+    meta: result.meta,
+    data: result.data,
+    
+  });
+});
+
 export const ReviewController = {
   createReview,
-  getMyReviews
+  getMyReviews,
+  getServiceReviews,
+  getTechnicianReviews,
 };

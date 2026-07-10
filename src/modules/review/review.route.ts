@@ -21,4 +21,14 @@ router.get(
   ReviewController.getMyReviews
 );
 
+router.get(
+  "/service/:serviceId",
+  ReviewController.getServiceReviews
+);
+
+router.get(
+  "/technician/:technicianId",
+  ReviewController.getTechnicianReviews
+);
+
 export const ReviewRouter = router;
