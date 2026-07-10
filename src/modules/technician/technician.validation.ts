@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BookingStatus } from "../../../prisma/generated/prisma/enums";
+import { BookingStatus } from "@prisma/client";
 
 const updateTechnicianProfileSchema = z.object({
   body: z.object({

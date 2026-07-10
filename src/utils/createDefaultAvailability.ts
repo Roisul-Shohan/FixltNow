@@ -1,4 +1,4 @@
-import { Prisma } from "../../prisma/generated/prisma/client";
+import { Prisma } from "@prisma/client";
 
 export const createDefaultAvailability = (
   technicianId: string

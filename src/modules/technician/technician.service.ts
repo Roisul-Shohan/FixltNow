@@ -1,13 +1,13 @@
-import { BookingStatus, PaymentStatus } from "../../../prisma/generated/prisma/enums";
-import AppError from "../../errors/AppErrors";
-import { prisma } from "../../lib/prisma";
-import { buildFilterCondition } from "../../utils/filter";
-import { calculatePagination, getPagination } from "../../utils/pagination";
-import { buildSearchCondition } from "../../utils/search";
-import { validateSlots } from "../availibility/availability.utils";
-import { AvailabilityService } from "../availibility/availibility.service";
-import { technicianSearchableFields } from "./technician.constant";
-import { IGetTechnician, TUpdateAvailability, TUpdateBookingStatus, TUpdateService, TUpdateTechnicianProfile } from "./technician.interface";
+import { BookingStatus, PaymentStatus } from "@prisma/client";
+import AppError from "../../errors/AppErrors.js";
+import { prisma } from "../../lib/prisma.js";
+import { buildFilterCondition } from "../../utils/filter.js";
+import { calculatePagination, getPagination } from "../../utils/pagination.js";
+import { buildSearchCondition } from "../../utils/search.js";
+import { validateSlots } from "../availibility/availability.utils.js";
+import { AvailabilityService } from "../availibility/availibility.service.js";
+import { technicianSearchableFields } from "./technician.constant.js";
+import { IGetTechnician, TUpdateAvailability, TUpdateBookingStatus, TUpdateService, TUpdateTechnicianProfile } from "./technician.interface.js";
 import httpStatus from 'http-status'
 
 

@@ -1,12 +1,12 @@
-import { Prisma } from "../../../prisma/generated/prisma/client";
-import { BookingStatus } from "../../../prisma/generated/prisma/enums";
-import AppError from "../../errors/AppErrors";
-import { prisma } from "../../lib/prisma";
-import { buildFilterCondition } from "../../utils/filter";
-import { calculatePagination, getPagination } from "../../utils/pagination";
-import { buildSearchCondition } from "../../utils/search";
-import { reviewFilterableFields, reviewSearchableFields } from "./review.constant";
-import { IGetReviews, IServiceReview, TCreateReview, TUpdateReview } from "./review.interface";
+import { Prisma } from "@prisma/client";
+import { BookingStatus } from "@prisma/client";
+import AppError from "../../errors/AppErrors.js";
+import { prisma } from "../../lib/prisma.js";
+import { buildFilterCondition } from "../../utils/filter.js";
+import { calculatePagination, getPagination } from "../../utils/pagination.js";
+import { buildSearchCondition } from "../../utils/search.js";
+import { reviewFilterableFields, reviewSearchableFields } from "./review.constant.js";
+import { IGetReviews, IServiceReview, TCreateReview, TUpdateReview } from "./review.interface.js";
 import httpStatus from "http-status";
 
 

@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { Jwt, JwtPayload}  from "jsonwebtoken";
-import { UserRole } from "../../prisma/generated/prisma/enums";
-import catchAsync from "../utils/catchAsync";
-import AppError from "../errors/AppErrors";
-import config from "../config";
+import { UserRole } from "@prisma/client";
+import catchAsync from "../utils/catchAsync.js";
+import AppError from "../errors/AppErrors.js";
+import config from "../config/index.js";
 import httpStatus from "http-status";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 
 declare global {

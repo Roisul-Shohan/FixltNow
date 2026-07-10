@@ -1,14 +1,13 @@
-import { prisma } from "../../lib/prisma";
-import { buildFilterCondition } from "../../utils/filter";
-import { calculatePagination, getPagination } from "../../utils/pagination";
-import { buildSearchCondition } from "../../utils/search";
-import { categoryFilterableFields, categorySearchableFields, userFilterableFields, userSearchableFields } from "./admin.constant";
-import { ICategory, IgetCategory, Igetuser, TUpdateCategory } from "./admin.interface";
-import { UserWhereInput } from "../../../prisma/generated/prisma/models";
-import { UserStatus } from "../../../prisma/generated/prisma/enums";
+import { prisma } from "../../lib/prisma.js";
+import { buildFilterCondition } from "../../utils/filter.js";
+import { calculatePagination, getPagination } from "../../utils/pagination.js";
+import { buildSearchCondition } from "../../utils/search.js";
+import { categoryFilterableFields, categorySearchableFields, userFilterableFields, userSearchableFields } from "./admin.constant.js";
+import { ICategory, IgetCategory, Igetuser, TUpdateCategory } from "./admin.interface.js";
+import { UserStatus } from "@prisma/client";
 import httpStatus from "http-status";
-import AppError from "../../errors/AppErrors";
-import { SortOrder } from "../../../prisma/generated/prisma/internal/prismaNamespace";
+import AppError from "../../errors/AppErrors.js";
+import { Prisma } from "@prisma/client";
 
 const getAllUsers = async (query : Igetuser) =>{
 

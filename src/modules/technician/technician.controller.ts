@@ -1,7 +1,7 @@
-import catchAsync from "../../utils/catchAsync";
-import sendResponse from "../../utils/sendResponse";
-import { BookingService } from "../booking/booking.service";
-import { TechnicianService } from "./technician.service";
+import catchAsync from "../../utils/catchAsync.js";
+import sendResponse from "../../utils/sendResponse.js";
+import { BookingService } from "../booking/booking.service.js";
+import { TechnicianService } from "./technician.service.js";
 import httpStatus from "http-status";
 
 

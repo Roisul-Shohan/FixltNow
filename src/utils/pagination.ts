@@ -1,7 +1,7 @@
 import {
   TPaginationOptions,
   TPaginationReturn,
-} from "../interfaces/pagination";
+} from "../interfaces/pagination.js";
 
 export const calculatePagination = (
   options: TPaginationOptions

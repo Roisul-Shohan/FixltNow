@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
-import catchAsync from "../../utils/catchAsync";
-import { PaymentService } from "./payment.service";
-import sendResponse from "../../utils/sendResponse";
+import catchAsync from "../../utils/catchAsync.js";
+import { PaymentService } from "./payment.service.js";
+import sendResponse from "../../utils/sendResponse.js";
 
 const createPaymentSession = catchAsync(async (req, res) => {
   const result = await PaymentService.createPaymentSession(

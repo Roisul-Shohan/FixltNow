@@ -1,9 +1,9 @@
-import AppError from "../../errors/AppErrors";
-import { prisma } from "../../lib/prisma";
-import { calculatePagination, getPagination } from "../../utils/pagination";
-import { buildSearchCondition } from "../../utils/search";
-import { categorySearchableFields } from "./category.constant";
-import { IGetCategory } from "./category.interface";
+import AppError from "../../errors/AppErrors.js";
+import { prisma } from "../../lib/prisma.js";
+import { calculatePagination, getPagination } from "../../utils/pagination.js";
+import { buildSearchCondition } from "../../utils/search.js";
+import { categorySearchableFields } from "./category.constant.js";
+import { IGetCategory } from "./category.interface.js";
 import httpStatus from "http-status";
 
 

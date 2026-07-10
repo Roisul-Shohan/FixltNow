@@ -1,6 +1,6 @@
-import { CategoryWhereInput, UserWhereInput } from "../../../prisma/generated/prisma/models";
+import { Prisma } from "@prisma/client";
 
-export interface Igetuser extends UserWhereInput{
+export interface Igetuser extends Prisma.UserWhereInput {
     searchTerm?: string
     page?: string
     limit?: string
@@ -9,7 +9,7 @@ export interface Igetuser extends UserWhereInput{
 
 }
 
-export interface IgetCategory extends CategoryWhereInput{
+export interface IgetCategory extends Prisma.CategoryWhereInput {
     searchTerm?: string
     page?: string
     limit?: string

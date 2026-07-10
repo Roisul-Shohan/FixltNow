@@ -1,4 +1,4 @@
-import AppError from "../../errors/AppErrors";
+import AppError from "../../errors/AppErrors.js";
 import httpStatus from "http-status"
 
 

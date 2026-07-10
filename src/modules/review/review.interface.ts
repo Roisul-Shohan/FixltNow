@@ -1,4 +1,4 @@
-import { ReviewWhereInput } from "../../../prisma/generated/prisma/models";
+import { Prisma } from "@prisma/client";
 
 export interface TCreateReview {
   bookingId: string;
@@ -6,7 +6,7 @@ export interface TCreateReview {
   comment?: string;
 }
 
-export interface IGetReviews extends ReviewWhereInput{
+export interface IGetReviews extends Prisma.ReviewWhereInput {
   page?: string;
   limit?: string;
   sortBy?: string;
@@ -17,7 +17,7 @@ export interface IGetReviews extends ReviewWhereInput{
   rating?: number;
 }
 
-export interface IServiceReview extends ReviewWhereInput{
+export interface IServiceReview extends Prisma.ReviewWhereInput {
   page?: string;
   limit?: string;
   sortBy?: string;

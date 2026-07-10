@@ -1,11 +1,11 @@
 
-import AppError from "../../errors/AppErrors";
-import { prisma } from "../../lib/prisma";
-import { buildFilterCondition } from "../../utils/filter";
-import { calculatePagination, getPagination } from "../../utils/pagination";
-import { buildSearchCondition } from "../../utils/search";
-import { serviceFilterableFields, serviceSearchableFields } from "./service.constant";
-import { ICreateService, IgetService } from "./service.interface";
+import AppError from "../../errors/AppErrors.js";
+import { prisma } from "../../lib/prisma.js";
+import { buildFilterCondition } from "../../utils/filter.js";
+import { calculatePagination, getPagination } from "../../utils/pagination.js";
+import { buildSearchCondition } from "../../utils/search.js";
+import { serviceFilterableFields, serviceSearchableFields } from "./service.constant.js";
+import { ICreateService, IgetService } from "./service.interface.js";
 import httpStatus from "http-status";
 
 const createService = async (payload : ICreateService) =>{

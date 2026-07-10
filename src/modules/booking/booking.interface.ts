@@ -1,4 +1,4 @@
-import { BookingWhereInput } from "../../../prisma/generated/prisma/models";
+import { Prisma } from "@prisma/client";
 
 export interface TCreateBooking {
   serviceId: string;
@@ -8,7 +8,7 @@ export interface TCreateBooking {
   customerAddress: string;
 }
 
-export interface IGetBookings extends BookingWhereInput {
+export interface IGetBookings extends Prisma.BookingWhereInput {
 
   searchTerm?: string;
 

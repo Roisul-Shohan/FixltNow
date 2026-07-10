@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { Prisma } from "../../prisma/generated/prisma/client";
+import { Prisma } from "@prisma/client";
 import httpStatus from "http-status";
 import { ZodError } from "zod";
 

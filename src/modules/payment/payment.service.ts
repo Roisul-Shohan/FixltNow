@@ -1,16 +1,15 @@
 import Stripe from "stripe";
-import config from "../../config";
-import { IGetPayments, TCreatePayment } from "./payment.interface";
-import { prisma } from "../../lib/prisma";
+import config from "../../config/index.js";
+import { IGetPayments, TCreatePayment } from "./payment.interface.js";
+import { prisma } from "../../lib/prisma.js";
 import httpStatus from "http-status";
-import AppError from "../../errors/AppErrors";
-import { BookingStatus, PaymentStatus } from "../../../prisma/generated/prisma/enums";
-import { currency, paymentFilterableFields, paymentSearchableFields } from "./payment.constant";
-import { calculatePagination, getPagination } from "../../utils/pagination";
-import { SortOrder } from "../../../prisma/generated/prisma/internal/prismaNamespace";
-import { buildFilterCondition } from "../../utils/filter";
-import { buildSearchCondition } from "../../utils/search";
-import { Prisma } from "../../../prisma/generated/prisma/client";
+import AppError from "../../errors/AppErrors.js";
+import { BookingStatus, PaymentStatus } from "@prisma/client";
+import { currency, paymentFilterableFields, paymentSearchableFields } from "./payment.constant.js";
+import { calculatePagination, getPagination } from "../../utils/pagination.js";
+import { buildFilterCondition } from "../../utils/filter.js";
+import { buildSearchCondition } from "../../utils/search.js";
+import { Prisma } from "@prisma/client";
 
 const stripe = new Stripe(config.stripe_secret_key!);
 

@@ -1,4 +1,4 @@
-import { ServiceWhereInput } from "../../../prisma/generated/prisma/models";
+import { Prisma } from "@prisma/client";
 
 export interface ICreateService {
    userId : string;
@@ -10,7 +10,7 @@ export interface ICreateService {
 }
 
 
-export interface IgetService extends ServiceWhereInput{
+export interface IgetService extends Prisma.ServiceWhereInput {
     searchTerm?: string
     page?: string
     limit?: string

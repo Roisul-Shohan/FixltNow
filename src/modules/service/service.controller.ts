@@ -1,7 +1,7 @@
-import catchAsync from "../../utils/catchAsync";
+import catchAsync from "../../utils/catchAsync.js";
 import httpStatus from "http-status";
-import sendResponse from "../../utils/sendResponse";
-import { ServiceService } from "./service.service";
+import sendResponse from "../../utils/sendResponse.js";
+import { ServiceService } from "./service.service.js";
 
 const createService = catchAsync(async (req, res) => {
   const userId: string = req.user?.id as string;

@@ -2,12 +2,12 @@ import express from "express";
 
 
 
-import { AdminController } from "./admin.controller";
-import { auth } from "../../middlewares/auth";
-import { UserRole } from "../../../prisma/generated/prisma/enums";
-import validateRequest from "../../middlewares/validateRequest";
-import { AdminValidation } from "./admin.validation";
-import { AdminService } from "./admin.service";
+import { AdminController } from "./admin.controller.js";
+import { auth } from "../../middlewares/auth.js";
+import { UserRole } from "@prisma/client";
+import validateRequest from "../../middlewares/validateRequest.js";
+import { AdminValidation } from "./admin.validation.js";
+import { AdminService } from "./admin.service.js";
 
 const router = express.Router();
 

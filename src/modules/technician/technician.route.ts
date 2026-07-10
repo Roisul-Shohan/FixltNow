@@ -1,10 +1,10 @@
 import express from "express";
 
-import { TechnicianController } from "./technician.controller";
-import { UserRole } from "../../../prisma/generated/prisma/enums";
-import { auth } from "../../middlewares/auth";
-import { TechnicianValidation } from "./technician.validation";
-import validateRequest from "../../middlewares/validateRequest";
+import { TechnicianController } from "./technician.controller.js";
+import { UserRole } from "@prisma/client";
+import { auth } from "../../middlewares/auth.js";
+import { TechnicianValidation } from "./technician.validation.js";
+import validateRequest from "../../middlewares/validateRequest.js";
 
 const router = express.Router();
 

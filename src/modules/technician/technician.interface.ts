@@ -1,6 +1,6 @@
-import { TechnicianProfileWhereInput } from "../../../prisma/generated/prisma/models";
+import { Prisma } from "@prisma/client";
 
-export interface IGetTechnician extends TechnicianProfileWhereInput {
+export interface IGetTechnician extends Prisma.TechnicianProfileWhereInput {
   page?: string;
   limit?: string;
 

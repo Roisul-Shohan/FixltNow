@@ -1,13 +1,13 @@
 import httpStatus from "http-status";
-import { IGetBookings, TCreateBooking } from "./booking.interface";
-import { prisma } from "../../lib/prisma";
-import AppError from "../../errors/AppErrors";
-import { Prisma } from "../../../prisma/generated/prisma/browser";
-import { calculatePagination, getPagination } from "../../utils/pagination";
-import { buildFilterCondition } from "../../utils/filter";
-import { bookingFilterableFields, bookingSearchableFields } from "./booking.constant";
-import { buildSearchCondition } from "../../utils/search";
-import { formatTime, formatDate } from "../../utils/formatDateTime";
+import { IGetBookings, TCreateBooking } from "./booking.interface.js";
+import { prisma } from "../../lib/prisma.js";
+import AppError from "../../errors/AppErrors.js";
+import { Prisma } from "@prisma/client";
+import { calculatePagination, getPagination } from "../../utils/pagination.js";
+import { buildFilterCondition } from "../../utils/filter.js";
+import { bookingFilterableFields, bookingSearchableFields } from "./booking.constant.js";
+import { buildSearchCondition } from "../../utils/search.js";
+import { formatTime, formatDate } from "../../utils/formatDateTime.js";
 
 
 const timeToMinutes = (time: string) => {

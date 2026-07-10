@@ -1,12 +1,12 @@
-import AppError from "../../errors/AppErrors";
-import { prisma } from "../../lib/prisma";
-import { TLoginUser, TRegisterUser } from "./auth.interface";
+import AppError from "../../errors/AppErrors.js";
+import { prisma } from "../../lib/prisma.js";
+import { TLoginUser, TRegisterUser } from "./auth.interface.js";
 import httpStatus from "http-status";
 import bcrypt from "bcryptjs";
-import config from "../../config";
+import config from "../../config/index.js";
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import type { StringValue } from "ms";
-import { createDefaultAvailability } from "../../utils/createDefaultAvailability";
+import { createDefaultAvailability } from "../../utils/createDefaultAvailability.js";
 
 const registerUser = async (payload : TRegisterUser)=>{
 

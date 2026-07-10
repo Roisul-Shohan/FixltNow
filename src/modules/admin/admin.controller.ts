@@ -1,6 +1,6 @@
-import catchAsync from "../../utils/catchAsync";
-import sendResponse from "../../utils/sendResponse";
-import { AdminService } from "./admin.service";
+import catchAsync from "../../utils/catchAsync.js";
+import sendResponse from "../../utils/sendResponse.js";
+import { AdminService } from "./admin.service.js";
 import httpStatus from "http-status";
 
 

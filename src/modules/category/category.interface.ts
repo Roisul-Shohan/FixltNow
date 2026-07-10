@@ -1,6 +1,6 @@
-import { CategoryWhereInput } from "../../../prisma/generated/prisma/models";
+import { Prisma } from "@prisma/client";
 
-export interface IGetCategory  extends CategoryWhereInput{
+export interface IGetCategory  extends Prisma.CategoryWhereInput{
   page?: string;
   limit?: string;
 

@@ -1,9 +1,9 @@
 import express from "express";
-import { auth } from "../../middlewares/auth";
-import { UserRole } from "../../../prisma/generated/prisma/enums";
-import validateRequest from "../../middlewares/validateRequest";
-import { createBookingSchema } from "./bookingValidation";
-import { BookingController } from "./booking.controller";
+import { auth } from "../../middlewares/auth.js";
+import { UserRole } from "@prisma/client";
+import validateRequest from "../../middlewares/validateRequest.js";
+import { createBookingSchema } from "./bookingValidation.js";
+import { BookingController } from "./booking.controller.js";
 
 const router = express.Router();
 
