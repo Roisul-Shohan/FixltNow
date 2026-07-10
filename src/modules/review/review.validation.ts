@@ -24,6 +24,33 @@ import { z } from "zod";
   }),
 });
 
+const updateReviewSchema = z.object({
+  body: z
+    .object({
+      rating: z
+        .number()
+        .int()
+        .min(1)
+        .max(5)
+        .optional(),
+
+      comment: z
+        .string()
+        .trim()
+        .max(500)
+        .optional(),
+    })
+    .refine(
+      (data) => data.rating !== undefined || data.comment !== undefined,
+      {
+        message: "At least one field must be provided.",
+      }
+    ),
+});
+
+
+
 export const ReviewValidation = {
   createReviewSchema,
+  updateReviewSchema,
 };

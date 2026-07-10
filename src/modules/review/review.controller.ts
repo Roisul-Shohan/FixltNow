@@ -61,9 +61,40 @@ const getTechnicianReviews = catchAsync(async (req, res) => {
   });
 });
 
+const updateReview = catchAsync(async (req, res) => {
+  const result = await ReviewService.updateReview(
+    req.user?.id as string,
+    req.params.id as string,
+    req.body
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Review updated successfully.",
+    data: result,
+  });
+});
+
+const deleteReview = catchAsync(async (req, res) => {
+  await ReviewService.deleteReview(
+    req.user?.id as string,
+    req.params?.id as string
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Review deleted successfully.",
+    data: null,
+  });
+});
+
 export const ReviewController = {
   createReview,
   getMyReviews,
   getServiceReviews,
   getTechnicianReviews,
+  updateReview,
+  deleteReview,
 };

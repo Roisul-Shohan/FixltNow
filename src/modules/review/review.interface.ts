@@ -24,3 +24,8 @@ export interface IServiceReview extends ReviewWhereInput{
   sortOrder?: "asc" | "desc";
   rating?: number;
 }
+
+export interface TUpdateReview {
+  rating?: number;
+  comment?: string;
+}

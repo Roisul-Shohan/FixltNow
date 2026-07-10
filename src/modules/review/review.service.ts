@@ -6,7 +6,7 @@ import { buildFilterCondition } from "../../utils/filter";
 import { calculatePagination } from "../../utils/pagination";
 import { buildSearchCondition } from "../../utils/search";
 import { reviewFilterableFields, reviewSearchableFields } from "./review.constant";
-import { IGetReviews, IServiceReview, TCreateReview } from "./review.interface";
+import { IGetReviews, IServiceReview, TCreateReview, TUpdateReview } from "./review.interface";
 import httpStatus from "http-status";
 
 
@@ -323,10 +323,155 @@ const getTechnicianReviews = async (technicianId: string,query :IServiceReview) 
 };
 
 
+const updateReview = async (
+  customerId: string,
+  reviewId: string,
+  payload: TUpdateReview
+) => {
+  const review = await prisma.review.findFirst({
+    where: {
+      id: reviewId,
+      customerId,
+    },
+  });
+
+  if (!review) {
+     throw new AppError( httpStatus.NOT_FOUND, "Review not found." );
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const updatedReview = await tx.review.update({
+      where: {
+        id: review.id,
+      },
+      data: payload,
+    });
+
+    const technicianStats = await tx.review.aggregate({
+      where: {
+        technicianId: review.technicianId,
+      },
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+    });
+
+    await tx.technicianProfile.update({
+      where: {
+        id: review.technicianId,
+      },
+      data: {
+        averageRating: technicianStats._avg.rating ?? 0,
+        totalReviews: technicianStats._count.rating,
+      },
+    });
+
+    const serviceStats = await tx.review.aggregate({
+      where: {
+        serviceId: review.serviceId,
+      },
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+    });
+
+    await tx.service.update({
+      where: {
+        id: review.serviceId,
+      },
+      data: {
+        averageRating: serviceStats._avg.rating ?? 0,
+        totalReviews: serviceStats._count.rating,
+      },
+    });
+
+    return updatedReview;
+  });
+};
+
+const deleteReview = async (
+  customerId: string,
+  reviewId: string
+) => {
+  const review = await prisma.review.findFirst({
+    where: {
+      id: reviewId,
+      customerId,
+    },
+  });
+
+  if (!review) {
+    throw new AppError(httpStatus.NOT_FOUND,"Review not found.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await tx.review.delete({
+      where: {
+        id: review.id,
+      },
+    });
+
+    const technicianStats = await tx.review.aggregate({
+      where: {
+        technicianId: review.technicianId,
+      },
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+    });
+
+    await tx.technicianProfile.update({
+      where: {
+        id: review.technicianId,
+      },
+      data: {
+        averageRating: technicianStats._avg.rating ?? 0,
+        totalReviews: technicianStats._count.rating,
+      },
+    });
+
+    const serviceStats = await tx.review.aggregate({
+      where: {
+        serviceId: review.serviceId,
+      },
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+    });
+
+    await tx.service.update({
+      where: {
+        id: review.serviceId,
+      },
+      data: {
+        averageRating: serviceStats._avg.rating ?? 0,
+        totalReviews: serviceStats._count.rating,
+      },
+    });
+
+    return null;
+  });
+};
+
+
 
 export const ReviewService = {
   createReview,
   getMyReviews,
   getServiceReviews,
   getTechnicianReviews,
+  updateReview,
+  deleteReview,
 };
