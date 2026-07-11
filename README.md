@@ -6,6 +6,8 @@ Base path: `/api`
 
 🔗 **Live API**: [https://fixlit-now.vercel.app](https://fixlit-now.vercel.app)
 
+📄 **Postman Documentation**: [https://documenter.getpostman.com/view/49986455/2sBY4LRhJm](https://documenter.getpostman.com/view/49986455/2sBY4LRhJm)
+
 ---
 
 ## ✨ Features
