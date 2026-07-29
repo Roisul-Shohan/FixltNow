@@ -4,3 +4,7 @@ dist
 .env
 generated
 .vercel
+.env*
+
+out.log
+err.log
