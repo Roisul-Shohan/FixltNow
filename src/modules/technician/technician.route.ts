@@ -14,6 +14,12 @@ router.get(
 );
 
 router.get(
+  "/me/profile",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyProfile
+);
+
+router.get(
   "/:id",
   TechnicianController.getTechnicianById
 );

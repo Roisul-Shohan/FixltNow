@@ -95,6 +95,69 @@ return {
   };
 };
 
+const getMyProfile = async (userId: string) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          profileImage: true,
+          role: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+      service: {
+        where: { isActive: true },
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!technician) {
+    throw new AppError(httpStatus.NOT_FOUND, "Technician profile not found");
+  }
+
+  const upcomingBookings = await prisma.booking.count({
+    where: {
+      technicianId: technician.id,
+      status: { in: ["PENDING", "ACCEPTED", "PAID"] },
+      bookingDate: { gte: new Date() },
+    },
+  });
+
+  const totalEarnings = await prisma.payment.aggregate({
+    where: {
+      booking: {
+        technicianId: technician.id,
+      },
+      status: PaymentStatus.SUCCEEDED,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  return {
+    ...technician,
+    stats: {
+      upcomingBookings,
+      totalEarnings: totalEarnings._sum.amount ?? 0,
+    },
+  };
+};
+
 const getTechnicianById = async (id: string) => {
   const technician = await prisma.technicianProfile.findUnique({
     where: {
@@ -520,6 +583,7 @@ const deleteService = async (userId: string,serviceId: string
 
 export const TechnicianService = {
   getAllTechnicians,
+  getMyProfile,
   getTechnicianById,
   updateProfile,
   updateAvailability,
