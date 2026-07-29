@@ -20,6 +20,12 @@ router.get(
 );
 
 router.get(
+  "/me/bookings",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyBookings
+);
+
+router.get(
   "/:id",
   TechnicianController.getTechnicianById
 );

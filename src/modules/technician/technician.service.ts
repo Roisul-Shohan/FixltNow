@@ -1,4 +1,4 @@
-import { BookingStatus, PaymentStatus } from "@prisma/client";
+import { BookingStatus, PaymentStatus, Prisma } from "@prisma/client";
 import AppError from "../../errors/AppErrors.js";
 import { prisma } from "../../lib/prisma.js";
 import { buildFilterCondition } from "../../utils/filter.js";
@@ -9,6 +9,8 @@ import { AvailabilityService } from "../availibility/availibility.service.js";
 import { technicianSearchableFields } from "./technician.constant.js";
 import { IGetTechnician, TUpdateAvailability, TUpdateBookingStatus, TUpdateService, TUpdateTechnicianProfile } from "./technician.interface.js";
 import httpStatus from 'http-status'
+import { formatTime, formatDate } from "../../utils/formatDateTime.js";
+import { bookingFilterableFields, bookingSearchableFields } from "../booking/booking.constant.js";
 
 
 const getAllTechnicians = async (query: IGetTechnician) => {
@@ -92,6 +94,102 @@ return {
     },
 
     data: technicians,
+  };
+};
+
+const formatTechnicianBooking = (booking: any) => ({
+  ...booking,
+  bookingDate: formatDate(booking.bookingDate),
+  startTime: formatTime(booking.startTime),
+  endTime: formatTime(booking.endTime),
+  hourlyRate: booking.hourlyRate?.toString(),
+  totalAmount: booking.totalAmount?.toString(),
+});
+
+const getMyBookings = async (
+  userId: string,
+  query: Record<string, any>
+) => {
+  const technicianProfile = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!technicianProfile) {
+    throw new AppError(httpStatus.NOT_FOUND, "Technician profile not found");
+  }
+
+  const { searchTerm, ...filters } = query;
+
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+
+  const andConditions = buildFilterCondition(
+    filters,
+    bookingFilterableFields
+  );
+
+  const orCondition = buildSearchCondition(
+    searchTerm,
+    bookingSearchableFields
+  );
+
+  const whereConditions: Prisma.BookingWhereInput = {
+    technicianId: technicianProfile.id,
+    AND: [...andConditions],
+  };
+
+  if (orCondition.OR?.length) {
+    whereConditions.AND!.push(orCondition);
+  }
+
+  const bookings = await prisma.booking.findMany({
+    where: whereConditions,
+    select: {
+      id: true,
+      bookingDate: true,
+      startTime: true,
+      endTime: true,
+      hourlyRate: true,
+      totalAmount: true,
+      status: true,
+      customerAddress: true,
+      createdAt: true,
+      service: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          profileImage: true,
+        },
+      },
+      payment: {
+        select: {
+          id: true,
+          status: true,
+          amount: true,
+          paidAt: true,
+        },
+      },
+    },
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
+  });
+
+  const total = await prisma.booking.count({
+    where: whereConditions,
+  });
+
+  return {
+    meta: { page, limit, total },
+    data: bookings.map(formatTechnicianBooking),
   };
 };
 
@@ -584,6 +682,7 @@ const deleteService = async (userId: string,serviceId: string
 export const TechnicianService = {
   getAllTechnicians,
   getMyProfile,
+  getMyBookings,
   getTechnicianById,
   updateProfile,
   updateAvailability,
