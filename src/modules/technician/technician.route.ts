@@ -20,6 +20,12 @@ router.get(
 );
 
 router.get(
+  "/me/dashboard",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyDashboard
+);
+
+router.get(
   "/me/bookings",
   auth(UserRole.TECHNICIAN),
   TechnicianController.getMyBookings

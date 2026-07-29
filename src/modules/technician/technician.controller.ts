@@ -31,6 +31,19 @@ const getMyProfile = catchAsync(async (req, res) => {
   });
 });
 
+const getMyDashboard = catchAsync(async (req, res) => {
+  const result = await TechnicianService.getMyDashboard(
+    req.user?.id as string
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Dashboard retrieved successfully",
+    data: result,
+  });
+});
+
 const getMyBookings = catchAsync(async (req, res) => {
   const result = await TechnicianService.getMyBookings(
     req.user?.id as string,
@@ -152,6 +165,7 @@ const deleteService = catchAsync(async (req, res) => {
 export const TechnicianController = {
   getAllTechnicians,
   getMyProfile,
+  getMyDashboard,
   getMyBookings,
   getTechnicianById,
   updateProfile,

@@ -133,14 +133,15 @@ const getMyBookings = async (
     bookingSearchableFields
   );
 
+  const andList: Prisma.BookingWhereInput[] = [...andConditions];
+  if (orCondition.OR?.length) {
+    andList.push(orCondition);
+  }
+
   const whereConditions: Prisma.BookingWhereInput = {
     technicianId: technicianProfile.id,
-    AND: [...andConditions],
+    AND: andList,
   };
-
-  if (orCondition.OR?.length) {
-    whereConditions.AND!.push(orCondition);
-  }
 
   const bookings = await prisma.booking.findMany({
     where: whereConditions,
@@ -190,6 +191,211 @@ const getMyBookings = async (
   return {
     meta: { page, limit, total },
     data: bookings.map(formatTechnicianBooking),
+  };
+};
+
+const getMyDashboard = async (userId: string) => {
+  const technicianProfile = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      averageRating: true,
+      totalReviews: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          profileImage: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  if (!technicianProfile) {
+    throw new AppError(httpStatus.NOT_FOUND, "Technician profile not found");
+  }
+
+  const technicianId = technicianProfile.id;
+
+  const now = new Date();
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const [
+    activeServicesCount,
+    totalServicesCount,
+    bookingStatusGroups,
+    totalBookingsCount,
+    completedBookingsCount,
+    upcomingBookingsCount,
+    totalEarningsAgg,
+    thisMonthEarningsAgg,
+    lastMonthEarningsAgg,
+    recentBookings,
+    upcomingBookings,
+    recentReviews,
+  ] = await Promise.all([
+    prisma.service.count({ where: { technicianId, isActive: true } }),
+    prisma.service.count({ where: { technicianId } }),
+    prisma.booking.groupBy({
+      by: ["status"],
+      where: { technicianId },
+      _count: { _all: true },
+    }),
+    prisma.booking.count({ where: { technicianId } }),
+    prisma.booking.count({
+      where: { technicianId, status: BookingStatus.COMPLETED },
+    }),
+    prisma.booking.count({
+      where: {
+        technicianId,
+        status: { in: [BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.PAID] },
+        bookingDate: { gte: today },
+      },
+    }),
+    prisma.payment.aggregate({
+      where: {
+        booking: { technicianId },
+        status: PaymentStatus.SUCCEEDED,
+      },
+      _sum: { amount: true },
+    }),
+    prisma.payment.aggregate({
+      where: {
+        booking: { technicianId },
+        status: PaymentStatus.SUCCEEDED,
+        paidAt: { gte: startOfThisMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.payment.aggregate({
+      where: {
+        booking: { technicianId },
+        status: PaymentStatus.SUCCEEDED,
+        paidAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.booking.findMany({
+      where: { technicianId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        bookingDate: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        totalAmount: true,
+        service: { select: { id: true, title: true } },
+        customer: { select: { id: true, name: true, profileImage: true } },
+      },
+    }),
+    prisma.booking.findMany({
+      where: {
+        technicianId,
+        status: { in: [BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.PAID] },
+        bookingDate: { gte: today },
+      },
+      orderBy: [{ bookingDate: "asc" }, { startTime: "asc" }],
+      take: 5,
+      select: {
+        id: true,
+        bookingDate: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        customerAddress: true,
+        service: { select: { id: true, title: true } },
+        customer: { select: { id: true, name: true, phone: true } },
+      },
+    }),
+    prisma.review.findMany({
+      where: { technicianId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        createdAt: true,
+        customer: { select: { id: true, name: true, profileImage: true } },
+        service: { select: { id: true, title: true } },
+      },
+    }),
+  ]);
+
+  const bookingStatusBreakdown: Record<string, number> = {};
+  for (const g of bookingStatusGroups) {
+    bookingStatusBreakdown[g.status] = g._count._all;
+  }
+
+  const totalAmount = (agg: { _sum: { amount: any } } | null) =>
+    Number(agg?._sum.amount ?? 0);
+
+  const byMonthAgg = await prisma.payment.findMany({
+    where: {
+      booking: { technicianId },
+      status: PaymentStatus.SUCCEEDED,
+    },
+    select: { paidAt: true, amount: true },
+  });
+
+  const monthlyMap = new Map<string, number>();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    monthlyMap.set(key, 0);
+  }
+  for (const p of byMonthAgg) {
+    if (!p.paidAt) continue;
+    const key = `${p.paidAt.getFullYear()}-${String(p.paidAt.getMonth() + 1).padStart(2, "0")}`;
+    if (monthlyMap.has(key)) {
+      monthlyMap.set(key, monthlyMap.get(key)! + Number(p.amount));
+    }
+  }
+  const earningsByMonth = Array.from(monthlyMap.entries()).map(([month, amount]) => ({
+    month,
+    amount,
+  }));
+
+  const formatBooking = (b: any) => ({
+    ...b,
+    bookingDate: formatDate(b.bookingDate),
+    startTime: formatTime(b.startTime),
+    endTime: formatTime(b.endTime),
+    totalAmount: b.totalAmount?.toString(),
+  });
+
+  return {
+    profile: technicianProfile.user,
+    technicianSince: technicianProfile.createdAt,
+    summary: {
+      totalServices: totalServicesCount,
+      activeServices: activeServicesCount,
+      totalBookings: totalBookingsCount,
+      completedBookings: completedBookingsCount,
+      upcomingBookings: upcomingBookingsCount,
+      averageRating: technicianProfile.averageRating,
+      totalReviews: technicianProfile.totalReviews,
+    },
+    bookingStatusBreakdown,
+    earnings: {
+      total: totalAmount(totalEarningsAgg),
+      thisMonth: totalAmount(thisMonthEarningsAgg),
+      lastMonth: totalAmount(lastMonthEarningsAgg),
+      byMonth: earningsByMonth,
+    },
+    recentBookings: recentBookings.map(formatBooking),
+    upcomingBookings: upcomingBookings.map(formatBooking),
+    recentReviews,
   };
 };
 
@@ -682,6 +888,7 @@ const deleteService = async (userId: string,serviceId: string
 export const TechnicianService = {
   getAllTechnicians,
   getMyProfile,
+  getMyDashboard,
   getMyBookings,
   getTechnicianById,
   updateProfile,
