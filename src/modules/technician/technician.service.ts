@@ -521,6 +521,48 @@ const getTechnicianById = async (id: string) => {
   };
 };
 
+const getMyAvailability = async (userId: string) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!technician) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Technician profile not found"
+    );
+  }
+
+  const availability =
+    await AvailabilityService.getAvailability(technician.id);
+
+  // Group slots by date (YYYY-MM-DD) for easier client rendering
+  const grouped = availability.reduce<
+    Record<string, { startTime: string; endTime: string }[]>
+  >((acc, slot) => {
+    const key = slot.date.toISOString().split("T")[0]!;
+    if (!acc[key]) acc[key] = [];
+    acc[key]!.push({
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    });
+    return acc;
+  }, {});
+
+  const schedule = Object.entries(grouped)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([date, slots]) => ({
+      date,
+      slots,
+    }));
+
+  return {
+    technicianId: technician.id,
+    schedule,
+  };
+};
+
 const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=>{
     
     const {name,phone,profileImage,bio,yearsOfExperience}=payload;
@@ -889,6 +931,7 @@ export const TechnicianService = {
   getAllTechnicians,
   getMyProfile,
   getMyDashboard,
+  getMyAvailability,
   getMyBookings,
   getTechnicianById,
   updateProfile,

@@ -26,6 +26,12 @@ router.get(
 );
 
 router.get(
+  "/me/availability",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyAvailability
+);
+
+router.get(
   "/me/bookings",
   auth(UserRole.TECHNICIAN),
   TechnicianController.getMyBookings
