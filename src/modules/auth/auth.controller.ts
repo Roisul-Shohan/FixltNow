@@ -19,9 +19,9 @@ const registerUser = catchAsync(async (req, res) =>{
 });
 
 const loginUser = catchAsync ( async(req, res)=>{
-    
+
     const {accessToken,refreshToken,user} = await AuthService.loginUser(req.body);
-    
+
     res.cookie("accessToken", accessToken, {
         httpOnly : true,
         secure : false,
@@ -33,7 +33,7 @@ const loginUser = catchAsync ( async(req, res)=>{
         httpOnly : true,
         secure : false,
         sameSite : "none",
-        maxAge : 1000 * 60 * 60 * 24 * 7 
+        maxAge : 1000 * 60 * 60 * 24 * 7
     })
 
     sendResponse(res, {
@@ -69,7 +69,7 @@ const logout = catchAsync(async (req, res) => {
 
 
 const getMyProfile = catchAsync( async(req , res )=>{
-   
+
     const id =req.user?.id as string;
     const result =await AuthService.getMyProfile(id);
 
@@ -82,6 +82,18 @@ const getMyProfile = catchAsync( async(req , res )=>{
 
 
 })
+
+const updateMyProfile = catchAsync(async (req, res) => {
+    const id = req.user?.id as string;
+    const result = await AuthService.updateMyProfile(id, req.body);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Profile updated successfully",
+        data: result,
+    });
+});
 
 
 const refreshToken = catchAsync(async (req, res) => {
@@ -118,6 +130,7 @@ export  const AuthController= {
     registerUser,
     loginUser,
     getMyProfile,
+    updateMyProfile,
     logout,
     refreshToken,
 }

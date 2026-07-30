@@ -1,6 +1,6 @@
 import AppError from "../../errors/AppErrors.js";
 import { prisma } from "../../lib/prisma.js";
-import { TLoginUser, TRegisterUser } from "./auth.interface.js";
+import { TLoginUser, TRegisterUser, TUpdateMyProfile } from "./auth.interface.js";
 import httpStatus from "http-status";
 import bcrypt from "bcryptjs";
 import config from "../../config/index.js";
@@ -197,9 +197,69 @@ const refreshToken = async (payload : { refreshToken: string }) => {
 }
 
 
+const updateMyProfile = async (id: string, payload: TUpdateMyProfile) => {
+  const { name, phone, profileImage, bio, yearsOfExperience } = payload;
+
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: { technicianProfile: true },
+  });
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const userUpdateData: { name?: string; phone?: string; profileImage?: string } = {};
+  if (name !== undefined) userUpdateData.name = name;
+  if (phone !== undefined) userUpdateData.phone = phone;
+  if (profileImage !== undefined) userUpdateData.profileImage = profileImage;
+
+  const result = await prisma.$transaction(async (tx) => {
+    if (Object.keys(userUpdateData).length > 0) {
+      await tx.user.update({
+        where: { id },
+        data: userUpdateData,
+      });
+    }
+
+    if (user.role === "TECHNICIAN") {
+      if (bio !== undefined || yearsOfExperience !== undefined) {
+        if (!user.technicianProfile) {
+          throw new AppError(httpStatus.NOT_FOUND, "Technician profile not found");
+        }
+        await tx.technicianProfile.update({
+          where: { id: user.technicianProfile.id },
+          data: {
+            ...(bio !== undefined && { bio }),
+            ...(yearsOfExperience !== undefined && { yearsOfExperience }),
+          },
+        });
+      }
+    } else {
+      if (bio !== undefined || yearsOfExperience !== undefined) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "Bio and yearsOfExperience can only be updated by technicians",
+        );
+      }
+    }
+
+    const updated = await tx.user.findUnique({
+      where: { id },
+      include: { technicianProfile: true },
+      omit: { password: true },
+    });
+
+    return updated;
+  });
+
+  return result;
+};
+
 export const AuthService = {
   registerUser,
   loginUser,
   getMyProfile,
+  updateMyProfile,
   refreshToken,
 };

@@ -27,6 +27,13 @@ router.get(
     AuthController.getMyProfile
 )
 
+router.patch(
+    "/me",
+    auth(UserRole.ADMIN, UserRole.CUSTOMER, UserRole.TECHNICIAN),
+    validateRequest(AuthValidation.updateMyProfileSchema),
+    AuthController.updateMyProfile
+)
+
 router.post(
   "/logout",
   auth(UserRole.CUSTOMER, UserRole.TECHNICIAN, UserRole.ADMIN),

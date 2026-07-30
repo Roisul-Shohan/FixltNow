@@ -44,10 +44,21 @@ import { z } from "zod";
   }),
  });
 
+const updateMyProfileSchema = z.object({
+  body: z
+    .object({
+      name: z.string().min(1).optional(),
+      phone: z.string().optional(),
+      profileImage: z.string().optional(),
+      bio: z.string().optional(),
+      yearsOfExperience: z.coerce.number().int().nonnegative().optional(),
+    })
+    .refine((b) => Object.keys(b).length > 0, {
+      message: "At least one field must be provided",
+    }),
+});
 
-
-
-  const refreshTokenSchema = z.object({
+const refreshTokenSchema = z.object({
     body: z.object({}),
   });
 
@@ -55,4 +66,5 @@ import { z } from "zod";
     registerSchema,
     loginSchema,
     refreshTokenSchema,
+    updateMyProfileSchema,
   }

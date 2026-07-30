@@ -14,3 +14,11 @@ export interface TLoginUser {
   email: string;
   password: string;
 }
+
+export interface TUpdateMyProfile {
+  name?: string;
+  phone?: string;
+  profileImage?: string;
+  bio?: string;
+  yearsOfExperience?: number;
+}
