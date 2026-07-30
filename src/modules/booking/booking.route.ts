@@ -26,4 +26,10 @@ router.get(
   BookingController.getBookingById
 );
 
+router.patch(
+  "/:id/cancel",
+  auth(UserRole.CUSTOMER),
+  BookingController.cancelMyBooking
+);
+
 export const BookingRoutes = router;

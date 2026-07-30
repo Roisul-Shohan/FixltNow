@@ -435,8 +435,56 @@ const getBookingById = async (
 
     
 
+const cancelMyBooking = async (customerId: string, bookingId: string) => {
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      customerId,
+    },
+  });
+
+  if (!booking) {
+    throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
+  }
+
+  if (booking.status !== "PENDING") {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Only pending bookings can be cancelled"
+    );
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const cancelled = await tx.booking.update({
+      where: { id: booking.id },
+      data: { status: "CANCELLED" },
+    });
+
+    const startH = booking.startTime.getUTCHours();
+    const startM = booking.startTime.getUTCMinutes();
+    const endH = booking.endTime.getUTCHours();
+    const endM = booking.endTime.getUTCMinutes();
+    const startTime = `${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}`;
+    const endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+
+    await tx.availability.create({
+      data: {
+        technicianId: booking.technicianId,
+        date: booking.bookingDate,
+        startTime,
+        endTime,
+      },
+    });
+
+    return cancelled;
+  });
+
+  return result;
+};
+
 export const BookingService = {
   createBooking,
   getMyBookings,
   getBookingById,
+  cancelMyBooking,
 };
