@@ -482,9 +482,207 @@ const cancelMyBooking = async (customerId: string, bookingId: string) => {
   return result;
 };
 
+const getMyDashboard = async (customerId: string) => {
+  const customer = await prisma.user.findUnique({
+    where: { id: customerId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      profileImage: true,
+      createdAt: true,
+    },
+  });
+
+  if (!customer) {
+    throw new AppError(httpStatus.NOT_FOUND, "Customer not found");
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    0,
+    23,
+    59,
+    59,
+    999
+  );
+
+  const [
+    totalBookingsCount,
+    completedBookingsCount,
+    pendingBookingsCount,
+    cancelledBookingsCount,
+    upcomingBookingsCount,
+    bookingStatusGroups,
+    totalSpentAgg,
+    thisMonthSpentAgg,
+    lastMonthSpentAgg,
+    recentBookings,
+    upcomingBookings,
+    recentReviews,
+  ] = await Promise.all([
+    prisma.booking.count({ where: { customerId } }),
+    prisma.booking.count({
+      where: { customerId, status: "COMPLETED" },
+    }),
+    prisma.booking.count({
+      where: { customerId, status: "PENDING" },
+    }),
+    prisma.booking.count({
+      where: { customerId, status: "CANCELLED" },
+    }),
+    prisma.booking.count({
+      where: {
+        customerId,
+        status: { in: ["PENDING", "ACCEPTED", "PAID"] },
+        bookingDate: { gte: today },
+      },
+    }),
+    prisma.booking.groupBy({
+      by: ["status"],
+      where: { customerId },
+      _count: { _all: true },
+    }),
+    prisma.payment.aggregate({
+      where: {
+        booking: { customerId },
+        status: "SUCCEEDED",
+      },
+      _sum: { amount: true },
+    }),
+    prisma.payment.aggregate({
+      where: {
+        booking: { customerId },
+        status: "SUCCEEDED",
+        paidAt: { gte: startOfThisMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.payment.aggregate({
+      where: {
+        booking: { customerId },
+        status: "SUCCEEDED",
+        paidAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.booking.findMany({
+      where: { customerId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        bookingDate: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        totalAmount: true,
+        service: { select: { id: true, title: true } },
+        technician: {
+          select: {
+            id: true,
+            user: { select: { name: true, profileImage: true } },
+          },
+        },
+      },
+    }),
+    prisma.booking.findMany({
+      where: {
+        customerId,
+        status: { in: ["PENDING", "ACCEPTED", "PAID"] },
+        bookingDate: { gte: today },
+      },
+      orderBy: [{ bookingDate: "asc" }, { startTime: "asc" }],
+      take: 5,
+      select: {
+        id: true,
+        bookingDate: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        totalAmount: true,
+        customerAddress: true,
+        service: { select: { id: true, title: true } },
+        technician: {
+          select: {
+            id: true,
+            user: { select: { name: true, phone: true, profileImage: true } },
+          },
+        },
+      },
+    }),
+    prisma.review.findMany({
+      where: { customerId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        createdAt: true,
+        service: { select: { id: true, title: true } },
+        technician: {
+          select: {
+            id: true,
+            user: { select: { name: true, profileImage: true } },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const bookingStatusBreakdown: Record<string, number> = {};
+  for (const g of bookingStatusGroups) {
+    bookingStatusBreakdown[g.status] = g._count._all;
+  }
+
+  const totalAmount = (agg: { _sum: { amount: unknown } } | null) =>
+    Number(agg?._sum.amount ?? 0);
+
+  const formatBooking = (b: {
+    bookingDate: Date;
+    startTime: Date;
+    endTime: Date;
+    totalAmount: unknown;
+    [key: string]: unknown;
+  }) => ({
+    ...b,
+    bookingDate: formatDate(b.bookingDate),
+    startTime: formatTime(b.startTime),
+    endTime: formatTime(b.endTime),
+    totalAmount: b.totalAmount?.toString(),
+  });
+
+  return {
+    profile: customer,
+    summary: {
+      totalBookings: totalBookingsCount,
+      completedBookings: completedBookingsCount,
+      pendingBookings: pendingBookingsCount,
+      cancelledBookings: cancelledBookingsCount,
+      upcomingBookings: upcomingBookingsCount,
+    },
+    bookingStatusBreakdown,
+    spending: {
+      total: totalAmount(totalSpentAgg),
+      thisMonth: totalAmount(thisMonthSpentAgg),
+      lastMonth: totalAmount(lastMonthSpentAgg),
+    },
+    recentBookings: recentBookings.map(formatBooking),
+    upcomingBookings: upcomingBookings.map(formatBooking),
+    recentReviews,
+  };
+};
+
 export const BookingService = {
   createBooking,
   getMyBookings,
   getBookingById,
   cancelMyBooking,
+  getMyDashboard,
 };

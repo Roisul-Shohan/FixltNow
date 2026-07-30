@@ -21,6 +21,12 @@ router.get(
 );
 
 router.get(
+  "/me/dashboard",
+  auth(UserRole.CUSTOMER),
+  BookingController.getMyDashboard
+);
+
+router.get(
   "/:id",
   auth(UserRole.CUSTOMER),
   BookingController.getBookingById
