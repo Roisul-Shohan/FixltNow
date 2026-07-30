@@ -38,6 +38,12 @@ router.get(
 );
 
 router.get(
+  "/me/reviews",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyReviews
+);
+
+router.get(
   "/:id",
   TechnicianController.getTechnicianById
 );

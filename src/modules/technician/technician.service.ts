@@ -563,6 +563,77 @@ const getMyAvailability = async (userId: string) => {
   };
 };
 
+const getMyReviews = async (userId: string, query: Record<string, unknown>) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!technician) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Technician profile not found"
+    );
+  }
+
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+
+  const where: Prisma.ReviewWhereInput = {
+    technicianId: technician.id,
+  };
+
+  const [reviews, total, aggregate] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortOrder },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            profileImage: true,
+          },
+        },
+        service: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        booking: {
+          select: {
+            id: true,
+            bookingDate: true,
+          },
+        },
+      },
+    }),
+    prisma.review.count({ where }),
+    prisma.review.aggregate({
+      where,
+      _avg: { rating: true },
+      _count: { _all: true },
+    }),
+  ]);
+
+  const meta = {
+    page,
+    limit,
+    total,
+  };
+
+  return {
+    data: reviews,
+    meta,
+    stats: {
+      averageRating: aggregate._avg.rating ?? 0,
+      totalReviews: aggregate._count._all,
+    },
+  };
+};
+
 const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=>{
     
     const {name,phone,profileImage,bio,yearsOfExperience}=payload;
@@ -933,6 +1004,7 @@ export const TechnicianService = {
   getMyDashboard,
   getMyAvailability,
   getMyBookings,
+  getMyReviews,
   getTechnicianById,
   updateProfile,
   updateAvailability,
