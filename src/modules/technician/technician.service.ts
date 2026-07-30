@@ -791,6 +791,121 @@ const getMyCustomers = async (
   return { data, meta };
 };
 
+const getMyEarnings = async (
+  userId: string,
+  query: Record<string, unknown>
+) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!technician) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Technician profile not found"
+    );
+  }
+
+  const { page, limit, skip } = getPagination(query);
+
+  const where: Prisma.PaymentWhereInput = {
+    booking: { technicianId: technician.id },
+    status: PaymentStatus.SUCCEEDED,
+  };
+
+  const [rows, total, aggregate, monthlyAgg] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      orderBy: { paidAt: "desc" },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        amount: true,
+        currency: true,
+        paidAt: true,
+        paymentMethod: true,
+        booking: {
+          select: {
+            id: true,
+            bookingDate: true,
+            status: true,
+            service: { select: { id: true, title: true } },
+            customer: {
+              select: { id: true, name: true, profileImage: true },
+            },
+          },
+        },
+      },
+    }),
+    prisma.payment.count({ where }),
+    prisma.payment.aggregate({
+      where,
+      _sum: { amount: true },
+      _avg: { amount: true },
+      _count: { _all: true },
+    }),
+    prisma.payment.findMany({
+      where,
+      select: { paidAt: true, amount: true },
+    }),
+  ]);
+
+  const now = new Date();
+  const monthlyMap = new Map<string, number>();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    monthlyMap.set(key, 0);
+  }
+  for (const p of monthlyAgg) {
+    if (!p.paidAt) continue;
+    const key = `${p.paidAt.getFullYear()}-${String(p.paidAt.getMonth() + 1).padStart(2, "0")}`;
+    if (monthlyMap.has(key)) {
+      monthlyMap.set(
+        key,
+        monthlyMap.get(key)! + Number(p.amount)
+      );
+    }
+  }
+  const earningsByMonth = Array.from(monthlyMap.entries()).map(
+    ([month, amount]) => ({ month, amount })
+  );
+
+  const data = rows.map((p) => ({
+    id: p.id,
+    amount: Number(p.amount),
+    currency: p.currency,
+    paidAt: p.paidAt,
+    paymentMethod: p.paymentMethod,
+    booking: {
+      id: p.booking.id,
+      bookingDate: p.booking.bookingDate,
+      status: p.booking.status,
+      service: p.booking.service,
+      customer: p.booking.customer,
+    },
+  }));
+
+  const meta = { page, limit, total };
+
+  return {
+    data,
+    meta,
+    stats: {
+      totalEarnings: aggregate._sum.amount
+        ? Number(aggregate._sum.amount)
+        : 0,
+      averagePayment: aggregate._avg.amount
+        ? Number(aggregate._avg.amount)
+        : 0,
+      totalPayments: aggregate._count._all,
+    },
+    earningsByMonth,
+  };
+};
+
 const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=>{
     
     const {name,phone,profileImage,bio,yearsOfExperience}=payload;
@@ -1164,6 +1279,7 @@ export const TechnicianService = {
   getMyReviews,
   getMyServices,
   getMyCustomers,
+  getMyEarnings,
   getTechnicianById,
   updateProfile,
   updateAvailability,

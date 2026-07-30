@@ -56,6 +56,12 @@ router.get(
 );
 
 router.get(
+  "/me/earnings",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyEarnings
+);
+
+router.get(
   "/:id",
   TechnicianController.getTechnicianById
 );

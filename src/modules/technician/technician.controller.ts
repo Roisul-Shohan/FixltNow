@@ -123,6 +123,25 @@ const getMyCustomers = catchAsync(async (req, res) => {
   });
 });
 
+const getMyEarnings = catchAsync(async (req, res) => {
+  const result = await TechnicianService.getMyEarnings(
+    req.user?.id as string,
+    req.query
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Earnings retrieved successfully",
+    meta: result.meta,
+    data: {
+      payments: result.data,
+      stats: result.stats,
+      earningsByMonth: result.earningsByMonth,
+    },
+  });
+});
+
 const getTechnicianById = catchAsync(async (req, res) => {
   const result = await TechnicianService.getTechnicianById(
     req.params?.id as string
@@ -235,6 +254,7 @@ export const TechnicianController = {
   getMyReviews,
   getMyServices,
   getMyCustomers,
+  getMyEarnings,
   getTechnicianById,
   updateProfile,
   updateAvailability,
