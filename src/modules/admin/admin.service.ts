@@ -293,6 +293,158 @@ const getAllBookings = async (query: IgetBooking) => {
   };
 };
 
+const getDashboardStats = async () => {
+  // -------- Users --------
+  const [userTotal, customers, technicians, admins, activeUsers, blockedUsers] =
+    await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: "CUSTOMER" } }),
+      prisma.user.count({ where: { role: "TECHNICIAN" } }),
+      prisma.user.count({ where: { role: "ADMIN" } }),
+      prisma.user.count({ where: { status: "ACTIVE" } }),
+      prisma.user.count({ where: { status: "BLOCKED" } }),
+    ]);
+
+  // -------- Bookings (status breakdown) --------
+  const bookingStatusGroups = await prisma.booking.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
+
+  const bookingTotal = bookingStatusGroups.reduce(
+    (acc, g) => acc + g._count._all,
+    0
+  );
+
+  const bookingsByStatus = bookingStatusGroups.reduce<
+    Record<string, number>
+  >((acc, g) => {
+    acc[g.status] = g._count._all;
+    return acc;
+  }, {});
+
+  // -------- Categories + services --------
+  const [categoryTotal, serviceTotal] = await Promise.all([
+    prisma.category.count(),
+    prisma.service.count(),
+  ]);
+
+  // -------- Reviews --------
+  const reviewTotal = await prisma.review.count();
+
+  // -------- Revenue --------
+  const allPayments = await prisma.payment.findMany({
+    where: { status: "SUCCEEDED" },
+    select: { amount: true, paidAt: true },
+  });
+
+  const now = new Date();
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  let totalRevenue = 0;
+  let thisMonthRevenue = 0;
+  let lastMonthRevenue = 0;
+
+  for (const p of allPayments) {
+    const amt = Number(p.amount);
+    if (!Number.isFinite(amt)) continue;
+    totalRevenue += amt;
+    if (p.paidAt) {
+      if (p.paidAt >= startOfThisMonth) thisMonthRevenue += amt;
+      else if (p.paidAt >= startOfLastMonth && p.paidAt < startOfThisMonth)
+        lastMonthRevenue += amt;
+    }
+  }
+
+  // -------- Top categories (bookings grouped by service.categoryId) --------
+  const topCategoryGroups = await prisma.booking.groupBy({
+    by: ["serviceId"],
+    _count: { _all: true },
+    orderBy: { _count: { serviceId: "desc" } },
+    take: 5,
+  });
+
+  const serviceIds = topCategoryGroups.map((g) => g.serviceId);
+
+  const services = serviceIds.length
+    ? await prisma.service.findMany({
+        where: { id: { in: serviceIds } },
+        select: {
+          id: true,
+          title: true,
+          category: { select: { id: true, name: true } },
+        },
+      })
+    : [];
+
+  const serviceMap = new Map(services.map((s) => [s.id, s]));
+
+  const topCategories = topCategoryGroups.map((g) => {
+    const s = serviceMap.get(g.serviceId);
+    return {
+      categoryId: s?.category?.id ?? null,
+      categoryName: s?.category?.name ?? "Uncategorized",
+      bookingsCount: g._count._all,
+    };
+  });
+
+  // -------- Recent bookings (5) --------
+  const recentBookings = await prisma.booking.findMany({
+    take: 5,
+    orderBy: { createdAt: "desc" },
+    include: {
+      customer: { select: { id: true, name: true, email: true } },
+      service: { select: { id: true, title: true } },
+      payment: { select: { id: true, status: true, amount: true } },
+    },
+  });
+
+  // -------- Recent users (5) --------
+  const recentUsers = await prisma.user.findMany({
+    take: 5,
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      profileImage: true,
+      createdAt: true,
+    },
+  });
+
+  return {
+    users: {
+      total: userTotal,
+      customers,
+      technicians,
+      admins,
+      active: activeUsers,
+      blocked: blockedUsers,
+    },
+    bookings: {
+      total: bookingTotal,
+      byStatus: bookingsByStatus,
+    },
+    catalog: {
+      categories: categoryTotal,
+      services: serviceTotal,
+      reviews: reviewTotal,
+    },
+    revenue: {
+      total: Number(totalRevenue.toFixed(2)),
+      thisMonth: Number(thisMonthRevenue.toFixed(2)),
+      lastMonth: Number(lastMonthRevenue.toFixed(2)),
+      currency: "USD",
+    },
+    topCategories,
+    recentBookings,
+    recentUsers,
+  };
+};
+
 
 
 
@@ -303,4 +455,5 @@ export const AdminService = {
   getAllCategories,
   updateCategory,
   getAllBookings,
+  getDashboardStats,
 };

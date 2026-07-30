@@ -50,5 +50,11 @@ router.get(
   AdminController.getAllBookings
 );
 
+router.get(
+  "/dashboard",
+  auth(UserRole.ADMIN),
+  AdminController.getDashboardStats
+);
+
 
 export const AdminRoutes = router;
