@@ -50,6 +50,12 @@ router.get(
 );
 
 router.get(
+  "/me/customers",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyCustomers
+);
+
+router.get(
   "/:id",
   TechnicianController.getTechnicianById
 );

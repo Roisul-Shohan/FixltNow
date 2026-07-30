@@ -719,6 +719,78 @@ const getMyServices = async (
   };
 };
 
+const getMyCustomers = async (
+  userId: string,
+  query: Record<string, unknown>
+) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!technician) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Technician profile not found"
+    );
+  }
+
+  const { page, limit, skip } = getPagination(query);
+
+  const [grouped, total] = await Promise.all([
+    prisma.booking.groupBy({
+      by: ["customerId"],
+      where: {
+        technicianId: technician.id,
+        status: BookingStatus.COMPLETED,
+      },
+      _count: { _all: true },
+      _sum: { totalAmount: true },
+      _max: { bookingDate: true },
+      orderBy: { _max: { bookingDate: "desc" } },
+      skip,
+      take: limit,
+    }),
+    prisma.booking
+      .groupBy({
+        by: ["customerId"],
+        where: {
+          technicianId: technician.id,
+          status: BookingStatus.COMPLETED,
+        },
+      })
+      .then((rows) => rows.length),
+  ]);
+
+  const customerIds = grouped.map((g) => g.customerId);
+  const customers =
+    customerIds.length === 0
+      ? []
+      : await prisma.user.findMany({
+          where: { id: { in: customerIds } },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            profileImage: true,
+          },
+        });
+
+  const byId = new Map(customers.map((c) => [c.id, c]));
+
+  const data = grouped.map((g) => ({
+    customer: byId.get(g.customerId) ?? null,
+    completedBookings: g._count._all,
+    totalSpent: g._sum.totalAmount ?? 0,
+    lastBookingDate: g._max.bookingDate,
+  }));
+
+  const meta = { page, limit, total };
+
+  return { data, meta };
+};
+
 const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=>{
     
     const {name,phone,profileImage,bio,yearsOfExperience}=payload;
@@ -1091,6 +1163,7 @@ export const TechnicianService = {
   getMyBookings,
   getMyReviews,
   getMyServices,
+  getMyCustomers,
   getTechnicianById,
   updateProfile,
   updateAvailability,
