@@ -17,3 +17,15 @@ export const categoryFilterableFields = [
   "name",
   "isActive",
 ];
+
+export const bookingSearchableFields = [
+  "customerAddress",
+  "service.title",
+];
+
+export const bookingFilterableFields = [
+  "status",
+  "customerId",
+  "technicianId",
+  "serviceId",
+];

@@ -44,5 +44,11 @@ router.patch(
   AdminController.updateCategory
 );
 
+router.get(
+  "/bookings",
+  auth(UserRole.ADMIN),
+  AdminController.getAllBookings
+);
+
 
 export const AdminRoutes = router;

@@ -58,7 +58,7 @@ const getAllCategories = catchAsync(async (req, res) => {
 });
 
 const updateCategory = catchAsync(async (req, res) => {
- 
+
   const result = await AdminService.updateCategory(
     req.params?.id as string,
     req.body
@@ -72,6 +72,18 @@ const updateCategory = catchAsync(async (req, res) => {
   });
 });
 
+const getAllBookings = catchAsync(async (req, res) => {
+  const result = await AdminService.getAllBookings(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Bookings retrieved successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
 
 export const AdminController = {
   getAllUsers,
@@ -79,4 +91,5 @@ export const AdminController = {
   createCategory,
   getAllCategories,
   updateCategory,
+  getAllBookings,
 };

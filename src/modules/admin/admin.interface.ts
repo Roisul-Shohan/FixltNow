@@ -28,3 +28,11 @@ export type TUpdateCategory = {
   description?: string;
   isActive?: boolean;
 };
+
+export interface IgetBooking extends Prisma.BookingWhereInput {
+  searchTerm?: string;
+  page?: string;
+  limit?: string;
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+}

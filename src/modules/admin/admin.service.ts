@@ -2,8 +2,15 @@ import { prisma } from "../../lib/prisma.js";
 import { buildFilterCondition } from "../../utils/filter.js";
 import { calculatePagination, getPagination } from "../../utils/pagination.js";
 import { buildSearchCondition } from "../../utils/search.js";
-import { categoryFilterableFields, categorySearchableFields, userFilterableFields, userSearchableFields } from "./admin.constant.js";
-import { ICategory, IgetCategory, Igetuser, TUpdateCategory } from "./admin.interface.js";
+import {
+  bookingFilterableFields,
+  bookingSearchableFields,
+  categoryFilterableFields,
+  categorySearchableFields,
+  userFilterableFields,
+  userSearchableFields,
+} from "./admin.constant.js";
+import { ICategory, IgetBooking, IgetCategory, Igetuser, TUpdateCategory } from "./admin.interface.js";
 import { UserStatus } from "@prisma/client";
 import httpStatus from "http-status";
 import AppError from "../../errors/AppErrors.js";
@@ -230,6 +237,62 @@ const updateCategory = async (id: string, payload: TUpdateCategory
   return result;
 };
 
+const getAllBookings = async (query: IgetBooking) => {
+  const { searchTerm, ...filters } = query;
+
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+
+  const andConditions = buildFilterCondition(filters, bookingFilterableFields);
+  const orCondition = buildSearchCondition(searchTerm, bookingSearchableFields);
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      AND: [...andConditions, orCondition],
+    },
+    include: {
+      customer: {
+        select: { id: true, name: true, email: true, profileImage: true },
+      },
+      technician: {
+        select: {
+          id: true,
+          user: {
+            select: { id: true, name: true, email: true, profileImage: true },
+          },
+        },
+      },
+      service: {
+        select: { id: true, title: true, categoryId: true },
+      },
+      payment: {
+        select: {
+          id: true,
+          status: true,
+          amount: true,
+          currency: true,
+          paidAt: true,
+        },
+      },
+    },
+    skip,
+    take: limit,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+  });
+
+  const total = await prisma.booking.count({
+    where: {
+      AND: [...andConditions, orCondition],
+    },
+  });
+
+  return {
+    meta: { page, limit, total },
+    data: bookings,
+  };
+};
+
 
 
 
@@ -239,4 +302,5 @@ export const AdminService = {
   createCategory,
   getAllCategories,
   updateCategory,
+  getAllBookings,
 };
