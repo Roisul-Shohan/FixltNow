@@ -634,6 +634,91 @@ const getMyReviews = async (userId: string, query: Record<string, unknown>) => {
   };
 };
 
+const getMyServices = async (
+  userId: string,
+  query: Record<string, unknown>
+) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!technician) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Technician profile not found"
+    );
+  }
+
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+
+  const filters = { ...query };
+  delete (filters as Record<string, unknown>).page;
+  delete (filters as Record<string, unknown>).limit;
+  delete (filters as Record<string, unknown>).sortBy;
+  delete (filters as Record<string, unknown>).sortOrder;
+
+  const andList: Prisma.ServiceWhereInput[] = [
+    { technicianId: technician.id },
+  ];
+
+  if (typeof filters.isActive === "string") {
+    const flag = filters.isActive === "true";
+    andList.push({ isActive: flag });
+  }
+
+  if (typeof filters.categoryId === "string") {
+    andList.push({ categoryId: filters.categoryId });
+  }
+
+  if (typeof filters.searchTerm === "string" && filters.searchTerm.length) {
+    const term = filters.searchTerm as string;
+    andList.push({
+      OR: [
+        { title: { contains: term, mode: "insensitive" } },
+        { description: { contains: term, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  const where: Prisma.ServiceWhereInput = { AND: andList };
+
+  const [services, total, aggregate] = await Promise.all([
+    prisma.service.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortOrder },
+      include: {
+        category: {
+          select: { id: true, name: true },
+        },
+        _count: {
+          select: { booking: true },
+        },
+      },
+    }),
+    prisma.service.count({ where }),
+    prisma.service.aggregate({
+      where: { technicianId: technician.id },
+      _count: { _all: true },
+      _avg: { hourlyRate: true },
+    }),
+  ]);
+
+  const meta = { page, limit, total };
+
+  return {
+    data: services,
+    meta,
+    stats: {
+      totalServices: aggregate._count._all,
+      averageHourlyRate: aggregate._avg.hourlyRate ?? 0,
+      activeServices: services.filter((s) => s.isActive).length,
+    },
+  };
+};
+
 const updateProfile = async (userId :string ,payload :TUpdateTechnicianProfile)=>{
     
     const {name,phone,profileImage,bio,yearsOfExperience}=payload;
@@ -1005,6 +1090,7 @@ export const TechnicianService = {
   getMyAvailability,
   getMyBookings,
   getMyReviews,
+  getMyServices,
   getTechnicianById,
   updateProfile,
   updateAvailability,

@@ -44,6 +44,12 @@ router.get(
 );
 
 router.get(
+  "/me/services",
+  auth(UserRole.TECHNICIAN),
+  TechnicianController.getMyServices
+);
+
+router.get(
   "/:id",
   TechnicianController.getTechnicianById
 );
