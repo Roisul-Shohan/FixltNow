@@ -181,9 +181,17 @@ const getServiceById = async (id: string) => {
             },
           },
           avalability: {
-            where: { date: { gte: new Date() } },
+            // Only show the rolling 7-day window starting today. The
+            // background cron in AvailabilityService rolls the window
+            // forward daily, but we re-apply the filter here so a missed
+            // cron run can never leak yesterday's slots into the API.
+            where: {
+              date: {
+                gte: new Date(),
+              },
+            },
             orderBy: [{ date: "asc" }, { startTime: "asc" }],
-            take: 10,
+            take: 20,
           },
         },
       },
@@ -208,10 +216,14 @@ const getServiceById = async (id: string) => {
   }
 
   if (!service.isActive) {
-    throw new AppError(httpStatus.NOT_FOUND, "Service is not available");
+    throw new AppError(httpStatus.NOT_FOUND, "Service is not available");       
   }
 
-  return service;
+  // Normalize singular `review` -> `reviews` so the API matches the
+  // existing frontend Service type and existing consumers (which read
+  // `service.reviews`) keep working.
+  const { review, ...rest } = service;
+  return { ...rest, reviews: review ?? [] };
 };
 
 export const ServiceService = {
