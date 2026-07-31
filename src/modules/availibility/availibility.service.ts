@@ -18,9 +18,11 @@ const DEFAULT_SLOTS = [
 const APP_TIMEZONE = "Asia/Dhaka";
 
 const getStartOfToday = (): Date => {
-  // Intl gives us the Y-M-D parts in the target timezone; we then build a
-  // Date at 00:00 local. Prisma stores @db.Date so we only need the calendar
-  // day, but using a JS Date keeps comparisons simple.
+  // Intl gives us the Y-M-D parts in the target timezone. We then build a
+  // Date at UTC midnight on that YMD so that Prisma's @db.Date stores the
+  // correct calendar day. (The previous implementation subtracted 6h, which
+  // caused the stored YMD to fall on the previous UTC day and made "today"
+  // queries compare against yesterday.)
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: APP_TIMEZONE,
     year: "numeric",
@@ -35,10 +37,7 @@ const getStartOfToday = (): Date => {
   const m = Number(get("month"));
   const d = Number(get("day"));
 
-  // We construct a Date that, when interpreted in UTC, represents midnight in
-  // the app timezone. Prisma's @db.Date will truncate this to Y-M-D.
-  const utcMillis = Date.UTC(y, m - 1, d) - 6 * 60 * 60 * 1000;
-  return new Date(utcMillis);
+  return new Date(Date.UTC(y, m - 1, d));
 };
 
 const addDays = (date: Date, days: number): Date => {
