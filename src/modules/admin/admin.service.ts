@@ -18,7 +18,18 @@ import { Prisma } from "@prisma/client";
 
 const getAllUsers = async (query : Igetuser) =>{
 
-    const { searchTerm, ...filters } = query;
+    const { searchTerm, ...rest } = query;
+
+    // Restrict filters to only fields the layer knows how to translate.
+    // Anything else (page, limit, sortBy, …) is handled separately by
+    // `getPagination` and would otherwise throw "missing fields" if it ever
+    // reached Prisma via `buildFilterCondition`.
+    const filters: Record<string, unknown> = {};
+    for (const key of userFilterableFields) {
+        if (key in rest && (rest as any)[key] !== undefined && (rest as any)[key] !== "") {
+            filters[key] = (rest as any)[key];
+        }
+    }
 
     const {
     page,
