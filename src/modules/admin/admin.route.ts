@@ -44,6 +44,12 @@ router.patch(
   AdminController.updateCategory
 );
 
+router.delete(
+  "/categories/:id",
+  auth(UserRole.ADMIN),
+  AdminController.deleteCategory
+);
+
 router.get(
   "/bookings",
   auth(UserRole.ADMIN),

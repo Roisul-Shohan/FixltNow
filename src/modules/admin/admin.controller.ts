@@ -72,6 +72,20 @@ const updateCategory = catchAsync(async (req, res) => {
   });
 });
 
+const deleteCategory = catchAsync(async (req, res) => {
+
+  const result = await AdminService.deleteCategory(
+    req.params?.id as string
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Category deleted successfully.",
+    data: result,
+  });
+});
+
 const getAllBookings = catchAsync(async (req, res) => {
   const result = await AdminService.getAllBookings(req.query);
 
@@ -126,6 +140,7 @@ export const AdminController = {
   createCategory,
   getAllCategories,
   updateCategory,
+  deleteCategory,
   getAllBookings,
   getDashboardStats,
   getAllServicesForAdmin,

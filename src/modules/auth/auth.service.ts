@@ -85,19 +85,10 @@ const loginUser = async(payload : TLoginUser) => {
         throw new AppError(httpStatus.FORBIDDEN,"Your account has been blocked. Please contact support.");
     }
 
-    let isPasswordValid = false;
+    // Unified bcrypt comparison for every role (fixes plaintext ADMIN check)
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if(user.role === "ADMIN"){
-      
-        if (password===user.password){
-            isPasswordValid =true;
-        }    
-    }else{
-        isPasswordValid = await bcrypt.compare(password,user.password);
-    }
-
-
-    if(!isPasswordValid) {
+    if (!isPasswordValid) {
         throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials")
     }
 

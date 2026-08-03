@@ -260,6 +260,31 @@ const updateCategory = async (id: string, payload: TUpdateCategory
   return result;
 };
 
+const deleteCategory = async (id: string) => {
+  const existing = await prisma.category.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: { service: true },
+      },
+    },
+  });
+
+  if (!existing) {
+    throw new AppError(httpStatus.NOT_FOUND, "Category not found");
+  }
+
+  if (existing._count?.service > 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Cannot delete: ${existing._count.service} service(s) still attached. Move them first.`
+    );
+  }
+
+  await prisma.category.delete({ where: { id } });
+  return { id, deleted: true };
+};
+
 const getAllBookings = async (query: IgetBooking) => {
   const { searchTerm, ...filters } = query;
 
@@ -628,6 +653,7 @@ export const AdminService = {
   createCategory,
   getAllCategories,
   updateCategory,
+  deleteCategory,
   getAllBookings,
   getDashboardStats,
   getAllServicesForAdmin,
