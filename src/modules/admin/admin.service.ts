@@ -3,14 +3,26 @@ import { buildFilterCondition } from "../../utils/filter.js";
 import { calculatePagination, getPagination } from "../../utils/pagination.js";
 import { buildSearchCondition } from "../../utils/search.js";
 import {
+  adminReviewFilterableFields,
+  adminReviewSearchableFields,
   bookingFilterableFields,
   bookingSearchableFields,
   categoryFilterableFields,
   categorySearchableFields,
+  serviceFilterableFields,
+  serviceSearchableFields,
   userFilterableFields,
   userSearchableFields,
 } from "./admin.constant.js";
-import { ICategory, IgetBooking, IgetCategory, Igetuser, TUpdateCategory } from "./admin.interface.js";
+import {
+  ICategory,
+  IgetBooking,
+  IgetCategory,
+  IgetReview,
+  IgetService,
+  Igetuser,
+  TUpdateCategory,
+} from "./admin.interface.js";
 import { UserStatus } from "@prisma/client";
 import httpStatus from "http-status";
 import AppError from "../../errors/AppErrors.js";
@@ -456,6 +468,157 @@ const getDashboardStats = async () => {
   };
 };
 
+const getAllServicesForAdmin = async (query: IgetService) => {
+  const { searchTerm, isActive, ...filters } = query;
+
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+
+  // Widen the filter type so we can index by arbitrary string keys (the typed
+  // Prisma where input has no string index signature).
+  const looseFilters = filters as Record<string, unknown>;
+
+  // Restrict filters to known fields so unknown query params don't reach
+  // Prisma and trigger "missing fields" errors.
+  const safeFilters: Record<string, unknown> = {};
+  for (const key of [
+    ...serviceFilterableFields,
+    "categoryId",
+    "technicianId",
+  ]) {
+    if (looseFilters[key] !== undefined && looseFilters[key] !== "") {
+      safeFilters[key] = looseFilters[key];
+    }
+  }
+
+  const andConditions = buildFilterCondition(safeFilters, [
+    ...serviceFilterableFields,
+    "categoryId",
+    "technicianId",
+  ]);
+  const orCondition = buildSearchCondition(searchTerm, serviceSearchableFields);
+
+  if (typeof isActive === "string") {
+    andConditions.push({ isActive: isActive === "true" });
+  } else if (typeof isActive === "boolean") {
+    andConditions.push({ isActive });
+  }
+
+  const services = await prisma.service.findMany({
+    where: {
+      AND: [...andConditions, orCondition],
+    },
+    include: {
+      category: { select: { id: true, name: true } },
+      technician: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+    },
+    skip,
+    take: limit,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+  });
+
+  const total = await prisma.service.count({
+    where: {
+      AND: [...andConditions, orCondition],
+    },
+  });
+
+  return {
+    meta: { page, limit, total },
+    data: services,
+  };
+};
+
+const getAllReviewsForAdmin = async (query: IgetReview) => {
+  const { searchTerm, rating, ...filters } = query;
+
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+
+  // Widen the filter type so we can index by arbitrary string keys.
+  const looseFilters = filters as Record<string, unknown>;
+
+  const safeFilters: Record<string, unknown> = {};
+  for (const key of adminReviewFilterableFields) {
+    if (looseFilters[key] !== undefined && looseFilters[key] !== "") {
+      safeFilters[key] = looseFilters[key];
+    }
+  }
+
+  const andConditions = buildFilterCondition(
+    safeFilters,
+    adminReviewFilterableFields
+  );
+  const orCondition = buildSearchCondition(
+    searchTerm,
+    adminReviewSearchableFields
+  );
+
+  if (rating !== undefined && rating !== null && rating !== "") {
+    andConditions.push({ rating: rating as number });
+  }
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      AND: [...andConditions, orCondition],
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profileImage: true,
+        },
+      },
+      service: {
+        select: { id: true, title: true },
+      },
+      technician: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+    },
+    skip,
+    take: limit,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+  });
+
+  const total = await prisma.review.count({
+    where: {
+      AND: [...andConditions, orCondition],
+    },
+  });
+
+  return {
+    meta: { page, limit, total },
+    data: reviews,
+  };
+};
+
 
 
 
@@ -467,4 +630,6 @@ export const AdminService = {
   updateCategory,
   getAllBookings,
   getDashboardStats,
+  getAllServicesForAdmin,
+  getAllReviewsForAdmin,
 };

@@ -29,3 +29,20 @@ export const bookingFilterableFields = [
   "technicianId",
   "serviceId",
 ];
+
+// Re-exported from the service module so admin/service can use the same
+// filterable/searchable field set without creating a hard dependency.
+export { serviceFilterableFields, serviceSearchableFields } from "../service/service.constant.js";
+
+export const adminReviewSearchableFields = [
+  "comment",
+  "service.title",
+  "customer.name",
+];
+
+export const adminReviewFilterableFields = [
+  "rating",
+  "serviceId",
+  "technicianId",
+  "customerId",
+];

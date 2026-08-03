@@ -36,3 +36,23 @@ export interface IgetBooking extends Prisma.BookingWhereInput {
   sortOrder?: "asc" | "desc";
   sortBy?: string;
 }
+
+export interface IgetService extends Omit<Prisma.ServiceWhereInput, "isActive"> {
+  searchTerm?: string;
+  page?: string;
+  limit?: string;
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  // isActive arrives as a string from the query layer; we coerce to boolean
+  // inside getAllServicesForAdmin so we don't widen the Prisma type.
+  isActive?: string;
+}
+
+export interface IgetReview extends Omit<Prisma.ReviewWhereInput, "rating"> {
+  searchTerm?: string;
+  page?: string;
+  limit?: string;
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+  rating?: string | number;
+}

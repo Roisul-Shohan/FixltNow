@@ -95,6 +95,30 @@ const getDashboardStats = catchAsync(async (_req, res) => {
   });
 });
 
+const getAllServicesForAdmin = catchAsync(async (req, res) => {
+  const result = await AdminService.getAllServicesForAdmin(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Services retrieved successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
+const getAllReviewsForAdmin = catchAsync(async (req, res) => {
+  const result = await AdminService.getAllReviewsForAdmin(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Reviews retrieved successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
 
 export const AdminController = {
   getAllUsers,
@@ -104,4 +128,6 @@ export const AdminController = {
   updateCategory,
   getAllBookings,
   getDashboardStats,
+  getAllServicesForAdmin,
+  getAllReviewsForAdmin,
 };

@@ -1,16 +1,27 @@
 export const buildFilterCondition = (
   filters: Record<string, unknown>,
   filterableFields: string[]
-) => {
+): Record<string, unknown>[] => {
   // Fields that represent enums / exact-match tokens. These must use `equals`
   // (not `contains`) — Prisma rejects `contains` on Postgres enum columns and
   // `contains` would over-match values like a hypothetical "SUPER_CUSTOMER".
+  // Foreign-key columns (categoryId, technicianId, customerId, …) must also use
+  // `equals` — Prisma's typed where input for FK fields does not accept
+  // `contains`, only `equals`/`in`/`not`.
   const exactMatchFields = new Set([
     "role",
     "status",
     "isActive",
     "isFeatured",
     "isDeleted",
+    "categoryId",
+    "technicianId",
+    "customerId",
+    "serviceId",
+    "userId",
+    "bookingId",
+    "paymentId",
+    "reviewId",
   ]);
 
   const andConditions = Object.entries(filters)

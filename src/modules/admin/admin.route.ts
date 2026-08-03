@@ -51,6 +51,18 @@ router.get(
 );
 
 router.get(
+  "/services",
+  auth(UserRole.ADMIN),
+  AdminController.getAllServicesForAdmin
+);
+
+router.get(
+  "/reviews",
+  auth(UserRole.ADMIN),
+  AdminController.getAllReviewsForAdmin
+);
+
+router.get(
   "/dashboard",
   auth(UserRole.ADMIN),
   AdminController.getDashboardStats
