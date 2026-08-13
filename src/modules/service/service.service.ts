@@ -1,4 +1,3 @@
-
 import AppError from "../../errors/AppErrors.js";
 import { prisma } from "../../lib/prisma.js";
 import { buildFilterCondition } from "../../utils/filter.js";
@@ -9,12 +8,12 @@ import { ICreateService, IgetService } from "./service.interface.js";
 import httpStatus from "http-status";
 
 const createService = async (payload : ICreateService) =>{
-    
-    const {userId,categoryId,title,description,hourlyRate,location}=payload;
+
+    const {userId,categoryId,title,description,hourlyRate,location,image}=payload;
 
     const technician = await  prisma.technicianProfile.findUnique({
         where:{
-            userId 
+            userId
         }
     });
 
@@ -63,6 +62,7 @@ const createService = async (payload : ICreateService) =>{
             description,
             location,
             hourlyRate,
+            ...(image ? { image } : {}),
             averageRating: 0,
         },
         include :{
@@ -216,7 +216,7 @@ const getServiceById = async (id: string) => {
   }
 
   if (!service.isActive) {
-    throw new AppError(httpStatus.NOT_FOUND, "Service is not available");       
+    throw new AppError(httpStatus.NOT_FOUND, "Service is not available");
   }
 
   // Normalize singular `review` -> `reviews` so the API matches the

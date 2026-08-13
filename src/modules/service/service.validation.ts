@@ -27,6 +27,11 @@ const createServiceSchema = z.object({
       .min(MINIMUM_HOURLY_RATE, {
         message: `Hourly rate must be at least ${MINIMUM_HOURLY_RATE}.`,
       }),
+
+    image: z
+      .string()
+      .url({ message: "Image must be a valid URL." })
+      .optional(),
   }),
 });
 

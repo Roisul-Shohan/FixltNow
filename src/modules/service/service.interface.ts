@@ -7,6 +7,7 @@ export interface ICreateService {
    description?: string;
    location: string;
    hourlyRate: number;
+   image?: string;
 }
 
 

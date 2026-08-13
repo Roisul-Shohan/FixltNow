@@ -39,4 +39,5 @@ export type TUpdateService = {
   location?: string;
   categoryId?: string;
   isActive?: boolean;
+  image?: string;
 };

@@ -14,6 +14,8 @@ model Service {
   averageRating  Float    @default(0)
   totalReviews   Int      @default(0)
 
+  image          String   @default("https://www.magnific.com/free-photos-vectors/electrical-instrument")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -58,6 +58,11 @@ const updateServiceSchema = z.object({
 
       categoryId: z.string().uuid().optional(),
       isActive: z.boolean().optional(),
+
+      image: z
+        .string()
+        .url({ message: "Image must be a valid URL." })
+        .optional(),
     })
     .refine(
       (data) =>
