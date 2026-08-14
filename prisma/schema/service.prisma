@@ -14,7 +14,7 @@ model Service {
   averageRating  Float    @default(0)
   totalReviews   Int      @default(0)
 
-  image          String   @default("https://www.magnific.com/free-photos-vectors/electrical-instrument")
+  image          String   @default("https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=800&q=80&auto=format&fit=crop")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

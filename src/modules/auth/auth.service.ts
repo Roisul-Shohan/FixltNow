@@ -85,8 +85,13 @@ const loginUser = async(payload : TLoginUser) => {
         throw new AppError(httpStatus.FORBIDDEN,"Your account has been blocked. Please contact support.");
     }
 
-    // Unified bcrypt comparison for every role (fixes plaintext ADMIN check)
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Admin accounts use a plain-text password (stored literally in the DB),
+    // every other role stores a bcrypt hash. We branch on role so the admin
+    // shortcut from the login page works without re-hashing on the backend.
+    const isPasswordValid =
+        user.role === "ADMIN"
+            ? password === user.password
+            : await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
         throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials")
