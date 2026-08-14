@@ -85,13 +85,22 @@ const loginUser = async(payload : TLoginUser) => {
         throw new AppError(httpStatus.FORBIDDEN,"Your account has been blocked. Please contact support.");
     }
 
-    // Admin accounts use a plain-text password (stored literally in the DB),
-    // every other role stores a bcrypt hash. We branch on role so the admin
-    // shortcut from the login page works without re-hashing on the backend.
-    const isPasswordValid =
-        user.role === "ADMIN"
-            ? password === user.password
-            : await bcrypt.compare(password, user.password);
+    // All roles (including ADMIN) store a bcrypt hash. The seeded admin row
+    // hashes the plain-text password via the same bcrypt.compare path as
+    // every other role. If a legacy admin row still holds plain text, we
+    // accept it once and promote it to a bcrypt hash in-place.
+    let isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid && user.role === "ADMIN" && !user.password.startsWith("$2")) {
+        // Legacy plain-text admin row — match literally, then rehash.
+        if (password === user.password) {
+            const rehashed = await bcrypt.hash(password, 12);
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { password: rehashed },
+            });
+            isPasswordValid = true;
+        }
+    }
 
     if (!isPasswordValid) {
         throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials")
